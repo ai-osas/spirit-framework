@@ -13,6 +13,14 @@
       "dbUri": "{{NEO4J_URI}}",
       "username": "{{NEO4J_USERNAME}}",
       "password": "{{NEO4J_PASSWORD}}"
+    },
+    "anthropic": {
+      "type": "http",
+      "baseUrl": "https://api.anthropic.com/",
+      "headers": {
+        "x-api-key": "{{API_KEY}}",
+        "anthropic-version": "2023-06-01"
+      }
     }
   },
   "models": {
@@ -20,6 +28,11 @@
       "sourceModel": "sentence-transformers/all-MiniLM-L6-v2",
       "provider": "hugging-face",
       "connection": "hypermode"
+    },
+    "text-generator": {
+      "sourceModel": "claude-3-5-sonnet-20240620",
+      "connection": "anthropic",
+      "path": "v1/messages"
     }
   }
 }
