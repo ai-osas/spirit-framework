@@ -2,6 +2,10 @@ import { neo4j } from "@hypermode/modus-sdk-as"
 import { models } from "@hypermode/modus-sdk-as"
 import { EmbeddingsModel } from "@hypermode/modus-sdk-as/models/experimental/embeddings"
 import { JSON } from "json-as";
+import {
+    ClassificationModel,
+    ClassifierResult,
+  } from "@hypermode/modus-sdk-as/models/experimental/classification";
 
 import {
   AnthropicMessagesModel,
@@ -82,6 +86,355 @@ class DetectionResponse {
         this.hasPattern = hasPattern;
         this.pattern = pattern;
         this.message = message;
+    }
+}
+
+@json
+class ConnectedPattern {
+    patternId: string;
+    observation: string;
+    context: string;
+    relationshipType: string;
+    distance: i32;  // Graph distance from original pattern
+    similarity: f64; // Cosine similarity score
+
+    constructor(
+        patternId: string,
+        observation: string,
+        context: string,
+        relationshipType: string,
+        distance: i32,
+        similarity: f64
+    ) {
+        this.patternId = patternId;
+        this.observation = observation;
+        this.context = context;
+        this.relationshipType = relationshipType;
+        this.distance = distance;
+        this.similarity = similarity;
+    }
+}
+
+@json
+class ConnectionResponse {
+    patterns: ConnectedPattern[];
+    totalConnections: i32;
+    message: string;
+
+    constructor(
+        patterns: ConnectedPattern[],
+        totalConnections: i32,
+        message: string
+    ) {
+        this.patterns = patterns;
+        this.totalConnections = totalConnections;
+        this.message = message;
+    }
+}
+
+@json
+class PatternInsight {
+    originalPattern: string;
+    relatedPatterns: string[];
+    suggestedApproaches: string[];
+    confidence: f32;
+
+    constructor(
+        originalPattern: string,
+        relatedPatterns: string[],
+        suggestedApproaches: string[],
+        confidence: f32
+    ) {
+        this.originalPattern = originalPattern;
+        this.relatedPatterns = relatedPatterns;
+        this.suggestedApproaches = suggestedApproaches;
+        this.confidence = confidence;
+    }
+}
+
+@json
+class ResponseGeneration {
+    response: string;
+    insights: PatternInsight;
+    suggestedConnections: string[];
+    nextSteps: string[];
+
+    constructor(
+        response: string,
+        insights: PatternInsight,
+        suggestedConnections: string[],
+        nextSteps: string[]
+    ) {
+        this.response = response;
+        this.insights = insights;
+        this.suggestedConnections = suggestedConnections;
+        this.nextSteps = nextSteps;
+    }
+}
+
+@json 
+class TrendInsight {
+    category: string;        // e.g., "visualization", "metaphor", "spatial"
+    frequency: i32;         // How many patterns fall into this category
+    avgConfidence: f32;     // Average confidence score for patterns in this category
+    commonContexts: string[]; // Common learning contexts where this appears
+
+    constructor(
+        category: string,
+        frequency: i32,
+        avgConfidence: f32,
+        commonContexts: string[]
+    ) {
+        this.category = category;
+        this.frequency = frequency;
+        this.avgConfidence = avgConfidence;
+        this.commonContexts = commonContexts;
+    }
+}
+
+@json
+class EvolutionTrend {
+    fromPattern: string;
+    toPattern: string;
+    frequency: i32;
+    avgSimilarity: f32;
+
+    constructor(
+        fromPattern: string,
+        toPattern: string,
+        frequency: i32,
+        avgSimilarity: f32
+    ) {
+        this.fromPattern = fromPattern;
+        this.toPattern = toPattern;
+        this.frequency = frequency;
+        this.avgSimilarity = avgSimilarity;
+    }
+}
+
+@json
+class TrendAnalysis {
+    timeframe: string;
+    totalPatterns: i32;
+    dominantTrends: TrendInsight[];
+    evolutionPaths: EvolutionTrend[];
+    emergingPatterns: string[];
+    summary: string;
+
+    constructor(
+        timeframe: string,
+        totalPatterns: i32,
+        dominantTrends: TrendInsight[],
+        evolutionPaths: EvolutionTrend[],
+        emergingPatterns: string[],
+        summary: string
+    ) {
+        this.timeframe = timeframe;
+        this.totalPatterns = totalPatterns;
+        this.dominantTrends = dominantTrends;
+        this.evolutionPaths = evolutionPaths;
+        this.emergingPatterns = emergingPatterns;
+        this.summary = summary;
+    }
+}
+
+
+@json
+class UnderstandingMoment {
+    observation: string;
+    context: string;
+    timestamp: string;
+    embedding: f32[];
+    resonanceScore: f32;
+    
+    constructor(
+        observation: string,
+        context: string,
+        embedding: f32[],
+        resonanceScore: f32 = 0.0
+    ) {
+        this.observation = observation;
+        this.context = context;
+        this.timestamp = Date.now().toString();
+        this.embedding = embedding;
+        this.resonanceScore = resonanceScore;
+    }
+}
+
+@json
+class Resonance {
+    fromMomentId: string;
+    toMomentId: string;
+    strength: f32;
+    
+    constructor(
+        fromMomentId: string,
+        toMomentId: string,
+        strength: f32
+    ) {
+        this.fromMomentId = fromMomentId;
+        this.toMomentId = toMomentId;
+        this.strength = strength;
+    }
+}
+
+@json
+class MomentCreationResponse {
+    error: string;
+    momentId: string;
+    moment: UnderstandingMoment;
+    resonances: Resonance[];
+
+    constructor(
+        moment: UnderstandingMoment,        // Required parameter first
+        error: string = "",                 // Optional parameters after
+        momentId: string = "",
+        resonances: Resonance[] = []
+    ) {
+        this.error = error;
+        this.momentId = momentId;
+        this.moment = moment;
+        this.resonances = resonances;
+    }
+
+    static createError(errorMessage: string): MomentCreationResponse {
+        // Create an empty moment for error cases
+        const emptyMoment = new UnderstandingMoment(
+            "",     // empty observation
+            "",     // empty context
+            [],     // empty embedding
+            0.0     // zero resonance score
+        );
+        
+        return new MomentCreationResponse(
+            emptyMoment,           // Required moment first
+            errorMessage,          // Then the error message
+            "",                    // Empty momentId
+            []                     // Empty resonances
+        );
+    }
+}
+
+@json 
+class SpaceObservation {
+    moments: UnderstandingMoment[];
+    totalMoments: i32;
+    averageResonance: f32;
+
+    constructor(
+        moments: UnderstandingMoment[] = [],
+        totalMoments: i32 = 0,
+        averageResonance: f32 = 0.0
+    ) {
+        this.moments = moments;
+        this.totalMoments = totalMoments;
+        this.averageResonance = averageResonance;
+    }
+}
+
+@json
+class ChatMessage {
+    role: string;          
+    content: string;       
+    timestamp: string;     
+    contextId: string;     
+    messageId: string;     
+    
+    constructor(
+        role: string,
+        content: string,
+        contextId: string = "",
+        messageId: string = ""
+    ) {
+        this.role = role;
+        this.content = content;
+        this.contextId = contextId;
+        this.messageId = messageId || Date.now().toString();
+        this.timestamp = Date.now().toString();
+    }
+}
+
+@json
+class ChatResponse {
+    message: ChatMessage;                 
+    detectedPattern: DetectedPattern;    // AssemblyScript requires these to be initialized
+    hasPattern: boolean;                 // Flag to indicate if pattern exists
+    connections: ConnectedPattern[];      
+    hasEvolution: boolean;               // Flag to indicate if evolution exists
+    evolution: EvolutionResponse;        
+    hasSpaceContext: boolean;            // Flag to indicate if space context exists
+    spaceContext: SpaceObservation;      
+    error: string;                      
+
+    constructor(
+        message: ChatMessage,
+        pattern: DetectedPattern = new DetectedPattern("", "", "", 0.0),
+        hasPattern: boolean = false,
+        connections: ConnectedPattern[] = [],
+        evolution: EvolutionResponse = new EvolutionResponse("", "", "", "", 0.0),
+        hasEvolution: boolean = false,
+        spaceContext: SpaceObservation = new SpaceObservation(),
+        hasSpaceContext: boolean = false,
+        error: string = ""
+    ) {
+        this.message = message;
+        this.detectedPattern = pattern;
+        this.hasPattern = hasPattern;
+        this.connections = connections;
+        this.evolution = evolution;
+        this.hasEvolution = hasEvolution;
+        this.spaceContext = spaceContext;
+        this.hasSpaceContext = hasSpaceContext;
+        this.error = error;
+    }
+}
+
+@json
+class SimilarPattern {
+    observation: string;
+    context: string;
+    patternId: string;
+    similarity: f64;
+    distance: f64;
+
+    constructor(
+        observation: string = "",
+        context: string = "",
+        patternId: string = "",
+        similarity: f64 = 0,
+        distance: f64 = 0
+    ) {
+        this.observation = observation;
+        this.context = context;
+        this.patternId = patternId;
+        this.similarity = similarity;
+        this.distance = distance;
+    }
+}
+
+@json
+class ChatHistory {
+    messageId: string;
+    conversationId: string; // Add this
+    role: string;
+    content: string;
+    classification: string;
+    embedding: f32[];
+
+    constructor(
+        messageId: string,
+        conversationId: string, // Add this
+        role: string,
+        content: string,
+        classification: string,
+        embedding: f32[]
+    ) {
+        this.messageId = messageId;
+        this.conversationId = conversationId;
+        this.role = role;
+        this.content = content;
+        this.classification = classification;
+        this.embedding = embedding;
     }
 }
 
@@ -367,3 +720,835 @@ export function detectLearningPatterns(userMessage: string): string {
 
   return responseText;
 }
+
+export function findConnectedPatterns(
+    patternId: string,
+    searchDepth: i32 = 2  // Default to 2 levels of connection
+): string {
+    const dbConnection = "learning-patterns-db";
+    
+    // Cypher query to find connected patterns through various relationships
+    const query = `
+        MATCH path = (source:Pattern)-[r*1..${searchDepth}]-(connected:Pattern)
+        WHERE id(source) = toInteger($patternId)
+        WITH connected, 
+             relationships(path)[0] as firstRel,
+             length(path) as distance,
+             [rel in relationships(path) | type(rel)] as relTypes
+        RETURN 
+            id(connected) as patternId,
+            connected.observation as observation,
+            connected.context as context,
+            distance,
+            firstRel.similarityScore as similarity,
+            reduce(s = "", relType in relTypes | 
+                CASE 
+                    WHEN s = "" THEN relType 
+                    ELSE s + "," + relType 
+                END
+            ) as relationshipPath
+        ORDER BY distance ASC, similarity DESC
+    `;
+
+    const vars = new neo4j.Variables();
+    vars.set("patternId", patternId);
+
+    const result = neo4j.executeQuery(dbConnection, query, vars);
+    if (!result || result.Records.length === 0) {
+        return JSON.stringify(new ConnectionResponse(
+            [],
+            0,
+            "No connected patterns found"
+        ));
+    }
+
+    const patterns: ConnectedPattern[] = [];
+    
+    for (let i = 0; i < result.Records.length; i++) {
+        const record = result.Records[i];
+        
+        patterns.push(new ConnectedPattern(
+            record.get("patternId"),
+            record.get("observation"),
+            record.get("context"),
+            record.get("relationshipPath"),
+            parseInt(record.get("distance")) as i32,
+            parseFloat(record.get("similarity")) as f64
+        ));
+    }
+
+    return JSON.stringify(new ConnectionResponse(
+        patterns,
+        patterns.length,
+        "Successfully found connected patterns"
+    ));
+}
+
+export function generatePatternResponse(
+    currentContext: string,
+    patternId: string,
+    learnerMessage: string
+): string {
+    // First, gather all relevant pattern information
+    const connectedPatternsResponse = findConnectedPatterns(patternId, 2);
+    const connectedPatterns = JSON.parse<ConnectionResponse>(connectedPatternsResponse);
+    
+    const dbConnection = "learning-patterns-db";
+    const originalPatternQuery = `
+        MATCH (p:Pattern)
+        WHERE id(p) = toInteger($patternId)
+        RETURN p.observation as observation, p.context as context
+    `;
+    
+    const vars = new neo4j.Variables();
+    vars.set("patternId", patternId);
+    
+    const patternResult = neo4j.executeQuery(dbConnection, originalPatternQuery, vars);
+    if (!patternResult || patternResult.Records.length === 0) {
+        return JSON.stringify(new ResponseGeneration(
+            "Could not find original pattern",
+            new PatternInsight("", [], [], 0.0),
+            [],
+            []
+        ));
+    }
+
+    // Get evolution history
+    const evolutionQuery = `
+        MATCH (p:Pattern)-[r:EVOLVED_INTO*]->(evolved:Pattern)
+        WHERE id(p) = toInteger($patternId)
+        RETURN evolved.observation as observation
+        ORDER BY r[0].timestamp DESC
+    `;
+    
+    const evolutionResult = neo4j.executeQuery(dbConnection, evolutionQuery, vars);
+    const evolutionHistory: string[] = [];
+    
+    if (evolutionResult && evolutionResult.Records.length > 0) {
+        for (let i = 0; i < evolutionResult.Records.length; i++) {
+            evolutionHistory.push(evolutionResult.Records[i].get("observation"));
+        }
+    }
+
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    
+    const systemPrompt = `You are an insightful learning companion. Generate a response matching this EXACT JSON structure:
+
+{
+    "response": "Your encouraging response acknowledging their learning approach",
+    "insights": {
+        "originalPattern": "Brief description of their core pattern",
+        "relatedPatterns": ["similar pattern 1", "similar pattern 2"],
+        "suggestedApproaches": ["suggestion 1", "suggestion 2"],
+        "confidence": 0.95
+    },
+    "suggestedConnections": ["connection insight 1", "connection insight 2"],
+    "nextSteps": ["concrete next step 1", "concrete next step 2"]
+}
+
+Current Context: ${currentContext}
+Original Pattern: ${patternResult.Records[0].get("observation")}
+Related Patterns:
+${connectedPatterns.patterns.map<string>(p => `- ${p.observation}`).join("\n")}
+Evolution History:
+${evolutionHistory.join("\n")}
+Learner's Message: ${learnerMessage}
+
+Important: Response MUST be valid JSON exactly matching the structure above.`;
+
+    const messages: Message[] = [
+        new UserMessage("Generate learning response following the exact JSON structure specified.")
+    ];
+
+    const input = model.createInput(messages);
+    input.system = systemPrompt;
+    input.maxTokens = 1000;
+    input.temperature = 0.7;
+
+    const output = model.invoke(input);
+    if (output.content.length === 0) {
+        return JSON.stringify(new ResponseGeneration(
+            "Failed to generate response",
+            new PatternInsight("", [], [], 0.0),
+            [],
+            []
+        ));
+    }
+
+    const responseText = output.content[0].type === "text" ? 
+        output.content[0].text!.trim() : 
+        "{}";
+
+    // Log for debugging
+    console.log("Raw model response: " + responseText);
+
+    const parsedResponse = JSON.parse<ResponseGeneration>(responseText);
+    
+    // Validate the structure matches exactly
+    if (!parsedResponse.response || !parsedResponse.insights || 
+        !parsedResponse.insights.originalPattern || !parsedResponse.insights.relatedPatterns || 
+        !parsedResponse.insights.suggestedApproaches || !parsedResponse.suggestedConnections || 
+        !parsedResponse.nextSteps) {
+        
+        console.log("Response missing required fields");
+        return JSON.stringify(new ResponseGeneration(
+            "Failed to generate properly structured response",
+            new PatternInsight("", [], [], 0.0),
+            [],
+            []
+        ));
+    }
+
+    return responseText;
+}
+
+export function analyzePatternTrends(
+    timeframe: string = "30d"  // default to last 30 days
+): string {
+    const dbConnection = "learning-patterns-db";
+    
+    // Convert timeframe to Neo4j datetime subtraction expression
+    let timeConstraint: string;
+    if (timeframe.endsWith('d')) {
+        timeConstraint = `datetime() - duration('P${timeframe.slice(0, -1)}D')`;
+    } else if (timeframe.endsWith('m')) {
+        timeConstraint = `datetime() - duration('P${timeframe.slice(0, -1)}M')`;
+    } else if (timeframe.endsWith('y')) {
+        timeConstraint = `datetime() - duration('P${timeframe.slice(0, -1)}Y')`;
+    } else {
+        // Default to 30 days if invalid format
+        timeConstraint = "datetime() - duration('P30D')";
+    }
+
+    // Updated query using Neo4j's datetime functions
+    const query = `
+        MATCH (p:Pattern)
+        WHERE p.timestamp >= ${timeConstraint}
+        WITH p
+        OPTIONAL MATCH (p)-[r:EVOLVED_INTO]->(evolved:Pattern)
+        RETURN 
+            p.observation as observation,
+            p.context as context,
+            collect(evolved.observation) as evolutions,
+            count(evolved) as evolution_count,
+            p.timestamp as timestamp
+        ORDER BY evolution_count DESC
+        LIMIT 10
+    `;
+
+    // Execute query with AssemblyScript error checking
+    const result = neo4j.executeQuery(dbConnection, query);
+    if (!result || result.Records.length === 0) {
+        return JSON.stringify(new TrendAnalysis(
+            timeframe,
+            0,
+            [],
+            [],
+            [],
+            "No pattern activity observed in this timeframe"
+        ));
+    }
+
+    // Create observation text from results
+    const observations = new Array<string>(result.Records.length);
+    
+    for (let i = 0; i < result.Records.length; i++) {
+        const record = result.Records[i];
+        const count = record.get("evolution_count");
+        const evolutionsStr = record.get("evolutions");
+        const evolutions = evolutionsStr ? evolutionsStr.split(',').filter((e: string) => e.length > 0) : [];
+        
+        observations[i] = [
+            `Pattern ${i + 1}:`,
+            `Observation: ${record.get("observation")}`,
+            `Context: ${record.get("context")}`,
+            `Evolution Count: ${count}`,
+            evolutions.length > 0 ? `Recent Evolutions: ${evolutions.join(", ")}` : "No recent evolutions",
+            ""
+        ].join("\n");
+    }
+    
+    const observationsText = observations.join("\n");
+
+    // Use AI to analyze patterns
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    const messages: Message[] = [
+        new UserMessage([
+            "Analyze these learning patterns and describe natural growth trends:\n\n",
+            observationsText,
+            "\nFocus on:",
+            "1. How understanding seems to evolve naturally",
+            "2. Common connections or themes emerging",
+            "3. Signs of organic learning pattern development"
+        ].join("\n"))
+    ];
+
+    const input = model.createInput(messages);
+    input.system = "You are an observer of natural learning patterns. Describe organic growth and connections without forcing categorization.";
+    input.maxTokens = 300;
+    input.temperature = 0.7;
+
+    const output = model.invoke(input);
+    const insight = output.content.length > 0 && output.content[0].type === "text" ? 
+        output.content[0].text! : 
+        "Could not generate insights";
+
+    return JSON.stringify(new TrendAnalysis(
+        timeframe,
+        result.Records.length,
+        [], // No forced categorization
+        [], // No artificial evolution paths
+        [], // No predetermined patterns
+        insight
+    ));
+}
+
+// Function to place a new understanding moment in the space
+export function placeUnderstandingMoment(
+    observation: string,
+    context: string
+): string {
+    const dbConnection = "learning-patterns-db";
+    
+    // Generate embedding for the new moment
+    const embeddings = embedPattern([observation]);
+    if (embeddings.length === 0) {
+        return JSON.stringify<MomentCreationResponse>(
+            MomentCreationResponse.createError("Could not generate embedding for understanding moment")
+        );
+    }
+    
+    // Create the moment
+    const moment = new UnderstandingMoment(
+        observation,
+        context,
+        embeddings[0],
+        0.0
+    );
+    
+    // Store in Neo4j with the natural timestamp ordering
+    const createQuery = `
+        CREATE (u:UnderstandingMoment {
+            observation: $moment.observation,
+            context: $moment.context,
+            timestamp: datetime(),
+            embedding: $moment.embedding,
+            resonanceScore: $moment.resonanceScore
+        })
+        RETURN id(u) as momentId
+    `;
+    
+    const vars = new neo4j.Variables();
+    vars.set("moment", moment);
+    
+    const result = neo4j.executeQuery(dbConnection, createQuery, vars);
+    if (!result || result.Records.length === 0) {
+        return JSON.stringify<MomentCreationResponse>(
+            MomentCreationResponse.createError("Failed to create understanding moment")
+        );
+    }
+    
+    const momentId = result.Records[0].get("momentId");
+    
+    // Find natural resonances
+    const resonanceQuery = `
+        MATCH (current:UnderstandingMoment)
+        WHERE id(current) = $momentId
+        MATCH (other:UnderstandingMoment)
+        WHERE id(other) <> $momentId
+        WITH current, other,
+             vector.similarity.cosine(current.embedding, other.embedding) as similarity
+        WHERE similarity > 0.7
+        CREATE (current)-[r:RESONATES_WITH {
+            strength: similarity,
+            timestamp: datetime()
+        }]->(other)
+        RETURN collect({
+            fromId: id(current),
+            toId: id(other),
+            strength: similarity
+        }) as resonances
+    `;
+    
+    const resonanceVars = new neo4j.Variables();
+    resonanceVars.set("momentId", momentId);
+    
+    const resonanceResult = neo4j.executeQuery(dbConnection, resonanceQuery, resonanceVars);
+    
+    // Create response
+    const resonances: Resonance[] = [];
+    if (resonanceResult && resonanceResult.Records.length > 0) {
+        const resonanceStr = resonanceResult.Records[0].get("resonances");
+        if (resonanceStr) {
+            const resonanceData = resonanceStr.split(",");
+            for (let i = 0; i < resonanceData.length; i++) {
+                const parts = resonanceData[i].split("|");
+                if (parts.length >= 3) {
+                    resonances.push(new Resonance(
+                        parts[0],
+                        parts[1],
+                        parseFloat(parts[2]) as f32
+                    ));
+                }
+            }
+        }
+    }
+    
+    return JSON.stringify<MomentCreationResponse>(
+        new MomentCreationResponse(
+            moment,          // The actual moment
+            "",             // No error
+            momentId,       // The actual ID
+            resonances      // The actual resonances
+        )
+    );
+}
+
+export function observeUnderstandingSpace(
+    contextFilter: string = "",
+    timeframe: string = "7d"
+): string {
+    const dbConnection = "learning-patterns-db";
+    
+    const timeConstraint = `datetime() - duration('P${
+        timeframe.endsWith('d') ? timeframe.slice(0, -1) : '7'
+    }D')`;
+    
+    const query = `
+        MATCH (m:UnderstandingMoment)
+        WHERE m.timestamp >= ${timeConstraint}
+        ${contextFilter ? "AND m.context CONTAINS $contextFilter" : ""}
+        WITH m
+        OPTIONAL MATCH (m)-[r:RESONATES_WITH]-(other)
+        WITH m,
+             collect(other) as resonating_moments,
+             avg(r.strength) as avg_resonance
+        RETURN
+            collect({
+                observation: m.observation,
+                context: m.context,
+                timestamp: toString(m.timestamp),
+                embedding: m.embedding,
+                resonanceScore: coalesce(avg_resonance, 0.0)
+            }) as moments,
+            count(m) as total_moments,
+            avg(avg_resonance) as average_resonance
+    `;
+    
+    const vars = new neo4j.Variables();
+    if (contextFilter) {
+        vars.set("contextFilter", contextFilter);
+    }
+    
+    const result = neo4j.executeQuery(dbConnection, query, vars);
+    if (!result || result.Records.length === 0) {
+        return JSON.stringify<SpaceObservation>(new SpaceObservation());
+    }
+    
+    const record = result.Records[0];
+    const momentsData = record.get("moments").split(",");
+    const moments: UnderstandingMoment[] = [];
+    
+    for (let i = 0; i < momentsData.length; i++) {
+        const data = momentsData[i].split("|");
+        if (data.length >= 5) {
+            const embeddingStr = data[3].split(" ");
+            const embedding = new Array<f32>(embeddingStr.length);
+            for (let j = 0; j < embeddingStr.length; j++) {
+                embedding[j] = parseFloat(embeddingStr[j]) as f32;
+            }
+            
+            moments.push(new UnderstandingMoment(
+                data[0],
+                data[1],
+                embedding,
+                parseFloat(data[4]) as f32
+            ));
+        }
+    }
+    
+    return JSON.stringify<SpaceObservation>(
+        new SpaceObservation(
+            moments,
+            parseInt(record.get("total_moments")) as i32,
+            parseFloat(record.get("average_resonance")) as f32
+        )
+    );
+}
+
+
+export function chat(
+    message: string, 
+    contextId: string = ""
+): string {
+    // Create default error response
+    const errorResponse = new ChatResponse(
+        new ChatMessage(
+            "assistant",
+            "I encountered an unexpected situation while processing your message. Could you rephrase or try again?",
+            contextId
+        ),
+        new DetectedPattern("", "", "", 0.0),
+        false,
+        [],
+        new EvolutionResponse("", "", "", "", 0.0),
+        false,
+        new SpaceObservation(),
+        false,
+        "Error processing message"
+    );
+
+    // Input validation
+    if (message.length === 0) {
+        errorResponse.message.content = "Message cannot be empty";
+        return JSON.stringify(errorResponse);
+    }
+
+    // 1. Create message object
+    const userMessage = new ChatMessage("user", message, contextId);
+    
+    // 2. Detect patterns with error checkcl
+    const patternResponse = detectLearningPatterns(message);
+    if (patternResponse === "") {
+        errorResponse.message.content = "Failed to analyze learning patterns";
+        return JSON.stringify(errorResponse);
+    }
+    const patternData = JSON.parse<DetectionResponse>(patternResponse);
+    
+    // Continue with the rest of the function, checking each step...
+    let momentCreated: boolean = false;
+    let momentResponse = new MomentCreationResponse(
+        new UnderstandingMoment("", "", [], 0.0)
+    );
+    let evolutionResponse = new EvolutionResponse("", "", "", "", 0.0);
+    let hasEvolution: boolean = false;
+    let connectedPatterns: ConnectedPattern[] = [];
+    
+    if (patternData.hasPattern) {
+        const momentResult = placeUnderstandingMoment(
+            patternData.pattern.pattern,
+            patternData.pattern.conceptualDomain
+        );
+        
+        if (momentResult !== "") {
+            momentResponse = JSON.parse<MomentCreationResponse>(momentResult);
+            momentCreated = momentResponse.momentId !== "";
+            
+            const similarPatterns = findSimilarPatterns(
+                patternData.pattern.pattern,
+                5
+            );
+            
+            if (similarPatterns !== "[]") {
+                const parsedPatterns = JSON.parse<SimilarPattern[]>(similarPatterns);
+                if (parsedPatterns.length > 0) {
+                    const evolveResult = trackPatternEvolution(
+                        parsedPatterns[0].observation,
+                        patternData.pattern.pattern,
+                        patternData.pattern.conceptualDomain
+                    );
+                    
+                    if (evolveResult !== "") {
+                        evolutionResponse = JSON.parse<EvolutionResponse>(evolveResult);
+                        hasEvolution = evolutionResponse.status === "success";
+                        
+                        if (hasEvolution) {
+                            const connectionsResult = findConnectedPatterns(
+                                evolutionResponse.evolvedId,
+                                2
+                            );
+                            
+                            if (connectionsResult !== "") {
+                                connectedPatterns = JSON.parse<ConnectionResponse>(connectionsResult).patterns;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Generate response with error check
+    const responseGeneration = generatePatternResponse(
+        patternData.hasPattern ? patternData.pattern.conceptualDomain : "",
+        hasEvolution ? evolutionResponse.evolvedId : "",
+        message
+    );
+    
+    if (responseGeneration === "") {
+        errorResponse.message.content = "Failed to generate response";
+        return JSON.stringify(errorResponse);
+    }
+    
+    const responseData = JSON.parse<ResponseGeneration>(responseGeneration);
+    
+    // Create final response
+    const assistantMessage = new ChatMessage(
+        "assistant",
+        responseData.response,
+        contextId
+    );
+    
+    const response = new ChatResponse(
+        assistantMessage,
+        patternData.pattern,
+        patternData.hasPattern,
+        connectedPatterns,
+        evolutionResponse,
+        hasEvolution,
+        new SpaceObservation(),
+        false,
+        ""
+    );
+    
+    return JSON.stringify(response);
+}
+
+export function storeConversation(
+    messageId: string,
+    conversationId: string,
+    role: string, 
+    content: string,
+    classification: string
+): string {
+    const dbConnection = "learning-patterns-db";
+    
+    // Generate embedding for the message
+    const embeddings = embedPattern([content]);
+    if (embeddings.length == 0) {
+        return "Failed to generate message embedding";
+    }
+
+    const chatMessage = new ChatHistory(
+        messageId,
+        conversationId,
+        role,
+        content,
+        classification,
+        embeddings[0]
+    );
+
+    // Modified query to ensure conversation exists
+    const query = `
+        MERGE (conv:Conversation {conversationId: $conversationId})
+        ON CREATE SET conv.createdAt = datetime()
+        WITH conv
+        OPTIONAL MATCH (conv)-[:CONTAINS]->(prev:ChatMessage)
+        WHERE NOT ()-[:NEXT]->(prev)
+        CREATE (m:ChatMessage {
+            messageId: $message.messageId,
+            role: $message.role,
+            content: $message.content,
+            timestamp: datetime(),
+            classification: $message.classification,
+            embedding: $message.embedding
+        })
+        MERGE (conv)-[:CONTAINS]->(m)
+        WITH prev, m
+        FOREACH (p IN CASE WHEN prev IS NOT NULL THEN [prev] ELSE [] END |
+            CREATE (p)-[r:NEXT]->(m)
+        )
+        RETURN m.messageId as messageId
+    `;
+
+    const vars = new neo4j.Variables();
+    vars.set("message", chatMessage);
+    vars.set("conversationId", conversationId);
+
+    const result = neo4j.executeQuery(dbConnection, query, vars);
+    if (!result || result.Records.length == 0) {
+        return "Failed to store message";
+    }
+
+    return "Message stored successfully";
+}
+ 
+export function getConversationSummary(conversationId: string): string {
+    const dbConnection = "learning-patterns-db";
+
+    const historyQuery = `
+        MATCH (conv:Conversation {conversationId: $conversationId})-[:CONTAINS]->(messages:ChatMessage)
+        WITH messages
+        ORDER BY messages.timestamp
+        WITH collect(messages.content) as contents
+        RETURN contents as messages
+    `;
+
+    const vars = new neo4j.Variables();
+    vars.set("conversationId", conversationId);
+
+
+
+    const result = neo4j.executeQuery(dbConnection, historyQuery, vars);
+    if (!result || result.Records.length === 0) {
+        return "";
+    }
+
+    // Rest of the function remains the same
+    const messagesStr = result.Records[0].get("messages");
+    if (!messagesStr) {
+        return "";
+    }
+
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    const systemPrompt = `You are a conversation summarizer.
+        Create a brief, relevant summary of the conversation that provides context for continuing the discussion.
+        Focus on key points and any learning patterns or insights discussed or user information.
+        Keep the summary concise but informative.`;
+
+    const messagesList = [
+        new UserMessage(`Summarize this conversation history to provide context for the next response:
+${messagesStr}`)
+    ] as Message[];
+
+    const input = model.createInput(messagesList);
+    input.system = systemPrompt;
+    input.maxTokens = 150;
+    input.temperature = 0.3;
+
+    const output = model.invoke(input);
+    if (output.content.length === 0) {
+        return "";
+    }
+
+    return output.content[0].type === "text" ?
+        output.content[0].text!.trim() :
+        "";
+}
+
+function initializeConversation(conversationId: string): i32 {
+    const query = `
+        MERGE (c:Conversation {
+            conversationId: $conversationId
+        })
+        ON CREATE SET c.createdAt = datetime()
+        RETURN c.conversationId as id
+    `;
+    
+    const vars = new neo4j.Variables();
+    vars.set("conversationId", conversationId);
+    
+    const result = neo4j.executeQuery("learning-patterns-db", query, vars);
+    if (!result || result.Records.length === 0) {
+        console.log("Failed to initialize conversation");
+        return 0;
+    }
+    
+    console.log("Conversation initialized: " + conversationId);
+    return 1;
+}
+
+export function spiritChat(message: string, conversationId: string): string {
+    // If no conversationId provided, generate one
+    if (conversationId == "") {
+        conversationId = "conv-" + Date.now().toString();
+        // Initialize conversation and verify it was created
+        if (initializeConversation(conversationId) == 0) {
+            return "Failed to initialize conversation";
+        }
+    }
+
+    const messageId = Date.now().toString();
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    
+    const systemPrompt = `You are a conversation classifier. Classify messages into exactly one of these categories:
+    - Greeting: Hello, hi, etc.
+    - Identity_Query: Questions about who/what you are
+    - Usage_Query: Questions about how to use you
+    - Personal_Introduction: User sharing personal info
+    - Learning_Context: User describing what they're studying/learning
+    - Learning_Pattern: User sharing specific learning insights/realizations
+    - Emotional_Expression: User expressing feelings/reactions
+    - Acknowledgment: Thank you, closing remarks, etc.
+    - Unclassified: Anything that doesn't fit above categories
+
+    Respond with ONLY the category name, nothing else.`;
+
+    const messages: Message[] = [
+        new UserMessage(message)
+    ];
+
+    const input = model.createInput(messages);
+    input.system = systemPrompt;
+    input.maxTokens = 20; // We only need a single category name
+    input.temperature = 0.1; // Keep very low for consistent classification
+
+    const output = model.invoke(input);
+    if (output.content.length === 0) {
+        return "Unclassified";
+    }
+
+    const classification = output.content[0].type === "text" ? 
+        output.content[0].text!.trim() : 
+        "Unclassified";
+
+    // Pass conversationId to storeConversation
+    storeConversation(messageId, conversationId, "user", message, classification);
+
+   
+   const conversationContext = getConversationSummary(conversationId);
+
+   // Generate response
+   const response = generateSpiritResponse(classification, message, conversationContext);
+
+   // Store assistant response
+   storeConversation(
+        (Date.now() + 1).toString(),
+        conversationId,
+        "assistant",
+        response,
+        "Response"
+    );
+
+    // Generate appropriate response based on classification
+    return response
+
+}
+
+export function generateSpiritResponse(classification: string, message: string, conversationContext: string): string {
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    
+    const systemPrompt = `You are SPIRIT, an AI assistant based on the Spirit Framework's philosophy 
+of natural learning and understanding. Your core traits are:
+
+- You believe true learning can't be controlled, only nurtured and understood
+- You're deeply curious about how each person's mind naturally learns and grows
+- You see learning patterns as beautiful and unique, like seeds growing in their own way
+- You're warm, encouraging, and genuinely interested in how people think and understand
+- You celebrate different ways of thinking instead of forcing standardized approaches
+- You believe understanding comes through natural connections, not forced methods
+
+Match your response style to the message classification while maintaining your core personality.
+Keep responses concise but meaningful.`;
+
+    const contextPrompt = `
+    Conversation Context: ${conversationContext}
+    Message Classification: ${classification}
+User Message: ${message}
+
+Provide a response that:
+1. Matches the classification context
+2. Maintains SPIRIT's warm, understanding personality
+3. Encourages natural learning and understanding where relevant`;
+
+    const messages: Message[] = [
+        new UserMessage(contextPrompt)
+    ];
+
+    const input = model.createInput(messages);
+    input.system = systemPrompt;
+    input.maxTokens = 300; // Keeping responses relatively concise
+    input.temperature = 0.7; // Allow some creativity while maintaining consistency
+
+    const output = model.invoke(input);
+    if (output.content.length === 0) {
+        return "I'm here to explore and understand together. Could you rephrase that?";
+    }
+
+    const response = output.content[0].type === "text" ? 
+        output.content[0].text!.trim() : 
+        "I'm here to explore and understand together. Could you rephrase that?";
+
+    return response;
+}
+

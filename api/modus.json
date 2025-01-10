@@ -33,6 +33,11 @@
       "sourceModel": "claude-3-5-sonnet-20240620",
       "connection": "anthropic",
       "path": "v1/messages"
+    },
+    "spirit-classifier": {
+      "sourceModel": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+      "connection": "hypermode",
+      "provider": "hugging-face"
     }
   }
 }
