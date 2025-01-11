@@ -61,9 +61,15 @@ const SpiritInterface = () => {
 
     } catch (error) {
       console.error('Error:', error);
+      let errorMessage = 'I apologize, but I encountered an error. Please try again.';
+
+      if (error instanceof Error && error.message.includes('API key not configured')) {
+        errorMessage = 'The system is not properly configured. Please check the API key setup.';
+      }
+
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again.',
+        content: errorMessage,
         timestamp: new Date().toISOString()
       }]);
     } finally {
