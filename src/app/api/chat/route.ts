@@ -4,6 +4,7 @@ import type { SpiritChatResponse, SpiritChatVariables } from '@/types/spirit'
 export async function POST(request: Request) {
   try {
     const variables: SpiritChatVariables = await request.json()
+    const modusEndpoint = process.env.NEXT_PUBLIC_MODUS_API || 'http://localhost:8686/graphql'
 
     const query = `
       query SpiritChat($message: String!, $conversationId: String!) {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
       }
     `
 
-    const response = await fetch('http://localhost:8686/graphql', {
+    const response = await fetch(modusEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
