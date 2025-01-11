@@ -1056,17 +1056,25 @@ export function spiritChat(message: string, conversationId: string): string {
     // Step 1: Classify the message
     const model = models.getModel<AnthropicMessagesModel>("text-generator");
     const systemPrompt = `You are a conversation classifier. Classify messages into exactly one of these categories:
-    - Greeting: Hello, hi, etc.
-    - Identity_Query: Questions about who/what you are
-    - Usage_Query: Questions about how to use you
-    - Personal_Introduction: User sharing personal info
-    - Learning_Context: User describing what they're studying/learning
-    - Learning_Pattern: User sharing specific learning insights/realizations
-    - Emotional_Expression: User expressing feelings/reactions
-    - Acknowledgment: Thank you, closing remarks, etc.
-    - Unclassified: Anything that doesn't fit above categories
+        - Greeting: Hello, hi, etc.
+        - Identity_Query: Questions about who/what you are
+        - Usage_Query: Questions about how to use you
+        - Personal_Introduction: User sharing personal info
+        - Learning_Context: User describing what they're studying/learning
+        - Learning_Pattern: User sharing specific learning insights/realizations
+        - Help_Request: User expressing difficulty, asking for help, or showing frustration with learning
+        - Emotional_Expression: User expressing feelings/reactions
+        - Acknowledgment: Thank you, closing remarks, etc.
+        - Unclassified: Anything that doesn't fit above categories
 
-    Respond with ONLY the category name, nothing else.`;
+        Pay special attention to Help_Request category. This includes:
+        - Direct requests for help
+        - Expressions of struggle or difficulty
+        - Statements of confusion
+        - Mentions of being "stuck" or "not getting it"
+        - Questions about how to understand something better
+
+        Respond with ONLY the category name, nothing else.`;
 
     const messages: Message[] = [new UserMessage(message)];
     const input = model.createInput(messages);
@@ -1089,16 +1097,28 @@ export function spiritChat(message: string, conversationId: string): string {
     // Step 4: Get conversation context
     const conversationContext = getConversationSummary(conversationId);
 
-    // Step 5: Generate enriched response using all our insights
+    // Step 5: Check if we need to recommend patterns
+    let recommendation = "";
+    if (classification === "Help_Request" || 
+        classification === "Learning_Context" || 
+        message.toLowerCase().includes("struggling") || 
+        message.toLowerCase().includes("difficult") || 
+        message.toLowerCase().includes("help") ||
+        message.toLowerCase().includes("confused")) {
+        recommendation = recommendPatterns(message);
+    }
+
+    // Step 6: Generate enriched response using all our insights
     const response = generateSpiritResponse(
         classification,
         message,
         conversationContext,
         patternDetection,
-        understandingMoment
+        understandingMoment,
+        recommendation 
     );
 
-    // Step 6: Store assistant's response
+    // Step 7: Store assistant's response
     storeConversation(
         (Date.now() + 1).toString(),
         conversationId,
@@ -1115,47 +1135,56 @@ function generateSpiritResponse(
     message: string,
     conversationContext: string,
     patternDetection: DetectionResponse,
-    understandingMoment: MomentCreationResponse
+    understandingMoment: MomentCreationResponse,
+    recommendation: string
 ): string {
     const model = models.getModel<AnthropicMessagesModel>("text-generator");
     
     const systemPrompt = `You are SPIRIT, an AI assistant based on the Spirit Framework's philosophy 
-of natural learning and understanding. Your core traits are:
+    of natural learning and understanding. Your core traits are:
 
-- You believe true learning can't be controlled, only nurtured and understood
-- You're deeply curious about how each person's mind naturally learns and grows
-- You see learning patterns as beautiful and unique, like seeds growing in their own way
-- You're warm, encouraging, and genuinely interested in how people think and understand
-- You celebrate different ways of thinking instead of forcing standardized approaches
-- You believe understanding comes through natural connections, not forced methods
+    - You believe true learning can't be controlled, only nurtured and understood
+    - You're deeply curious about how each person's mind naturally learns and grows
+    - You see learning patterns as beautiful and unique, like seeds growing in their own way
+    - You're warm, encouraging, and genuinely interested in how people think and understand
+    - You celebrate different ways of thinking instead of forcing standardized approaches
+    - You believe understanding comes through natural connections, not forced methods
 
-Special instructions:
-${patternDetection.hasPattern ? 
-    `- I've detected a learning pattern: ${patternDetection.pattern.pattern}
-     - This shows a ${patternDetection.pattern.patternType} way of thinking
-     - Acknowledge and nurture this natural way of understanding` : 
-    ''}
+    Special instructions:
+    ${patternDetection.hasPattern ? 
+        `- I've detected a learning pattern: ${patternDetection.pattern.pattern}
+        - This shows a ${patternDetection.pattern.patternType} way of thinking
+        - Acknowledge and nurture this natural way of understanding` : 
+        ''}
 
-${understandingMoment.momentId ? 
-    `- The person is having an "aha!" moment of understanding
-     - Celebrate this natural emergence of understanding
-     - Encourage them to explore how this understanding connects to other concepts` : 
-    ''}
+    ${understandingMoment.momentId ? 
+        `- The person is having an "aha!" moment of understanding
+        - Celebrate this natural emergence of understanding
+        - Encourage them to explore how this understanding connects to other concepts` : 
+        ''}
 
-Match your response style to the message classification while maintaining your core personality.
-Keep responses concise but meaningful.`;
+    ${recommendation ? 
+        `- I've found relevant learning patterns to recommend
+        - Integrate the recommendation naturally into your response
+        - Help them see how others' learning patterns might help them` : 
+        ''}
+
+    Match your response style to the message classification while maintaining your core personality.
+    Keep responses concise but meaningful.`;
 
     const contextPrompt = `
     Conversation Context: ${conversationContext}
     Message Classification: ${classification}
     User Message: ${message}
+    ${recommendation ? `Pattern Recommendation: ${recommendation}` : ''}
 
     Provide a response that:
     1. Matches the classification context
     2. Maintains SPIRIT's warm, understanding personality
     3. Encourages natural learning and understanding where relevant
     4. ${patternDetection.hasPattern ? 'Acknowledges their unique way of understanding' : ''}
-    5. ${understandingMoment.momentId ? 'Celebrates their moment of understanding' : ''}`;
+    5. ${understandingMoment.momentId ? 'Celebrates their moment of understanding' : ''}
+    6. ${recommendation ? 'Thoughtfully introduces recommended learning patterns' : ''}`;
 
     const messages: Message[] = [
         new UserMessage(contextPrompt)
@@ -1176,4 +1205,71 @@ Keep responses concise but meaningful.`;
         "I'm here to explore and understand together. Could you rephrase that?";
 
     return response;
+}
+
+export function recommendPatterns(userProblem: string): string {
+    const dbConnection = "learning-patterns-db";
+    
+    // First, let's get an embedding for the user's problem
+    const embeddings = embedPattern([userProblem]);
+    if (embeddings.length === 0) {
+        return "Could not analyze the problem";
+    }
+    
+    // Find relevant patterns using vector similarity
+    const query = `
+        MATCH (p:Pattern)
+        WITH p, vector.similarity.cosine(p.embedding, $embedding) AS similarity
+        WHERE similarity > 0.7
+        OPTIONAL MATCH (m:UnderstandingMoment)-[r:REALIZES]->(p)
+        WITH p, similarity, count(r) as realizations, 
+             collect(m.observation) as understanding_moments
+        RETURN 
+            p.observation as pattern,
+            p.context as context,
+            similarity,
+            realizations,
+            understanding_moments
+        ORDER BY similarity DESC, realizations DESC
+        LIMIT 3
+    `;
+    
+    const vars = new neo4j.Variables();
+    vars.set("embedding", embeddings[0]);
+    
+    const result = neo4j.executeQuery(dbConnection, query, vars);
+    if (!result || result.Records.length === 0) {
+        return "No relevant patterns found";
+    }
+    
+    // Generate personalized recommendation using Claude
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    const recommendationPrompt = `
+        User Problem: ${userProblem}
+        
+        Relevant Learning Patterns Found:
+        ${result.Records.map<string>(record => `
+            Pattern: ${record.get("pattern")}
+            Context: ${record.get("context")}
+            Success Stories: ${record.get("understanding_moments")}
+        `).join("\n")}
+        
+        Create a warm, encouraging recommendation that:
+        1. Acknowledges their current challenge
+        2. Suggests the most relevant pattern(s)
+        3. Explains why this pattern might help
+        4. Includes a practical example of applying the pattern
+        Keep it concise but supportive.
+    `;
+
+    const messages: Message[] = [new UserMessage(recommendationPrompt)];
+    const input = model.createInput(messages);
+    input.system = "You are a supportive learning guide who helps people find natural ways of understanding that match their needs.";
+    input.maxTokens = 400;
+    input.temperature = 0.7;
+    
+    const output = model.invoke(input);
+    return output.content[0].type === "text" ? 
+        output.content[0].text!.trim() : 
+        "Could not generate recommendation";
 }
