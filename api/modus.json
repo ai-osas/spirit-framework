@@ -10,7 +10,7 @@
   "connections": {
     "learning-patterns-db": {
       "type": "neo4j",
-      "dbUri": "{{NEO4J_URI}}",
+      "dbUri": "neo4j+s://351ae27b.databases.neo4j.io",
       "username": "{{NEO4J_USERNAME}}",
       "password": "{{NEO4J_PASSWORD}}"
     },
