@@ -443,91 +443,113 @@ export function trackPatternEvolution(
 }
 
 
-export function detectLearningPatterns(userMessage: string): string {
-    // Create an empty pattern for error cases
-    const emptyPattern = new DetectedPattern(
-        "",           // pattern
-        "",           // patternType
-        "",           // conceptualDomain
-        0.0          // confidence
+function detectLearningPatterns(userMessage: string, conversationId: string): DetectionResponse {
+    const emptyPattern = new DetectedPattern("", "", "", 0.0);
+    
+    // Check for empty message
+    if (userMessage.trim().length === 0) {
+        return new DetectionResponse(false, emptyPattern, "Empty message");
+    }
+
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    
+    // Enhanced system prompt for more nuanced pattern detection
+    const systemPrompt = `You are a learning pattern detection system based on the Spirit Framework. 
+    Analyze the message for natural learning patterns, focusing on:
+    1. How the person naturally processes and visualizes information
+    2. Personal metaphors and mental models they use
+    3. Unique connections they make between concepts
+    4. Their individual approach to understanding
+    
+    Look for authentic patterns - don't force detection. A learning pattern should show their 
+    natural way of understanding, not just knowledge of a topic.
+
+    Respond in this JSON format:
+    {
+        "hasPattern": true/false,
+        "pattern": {
+            "pattern": "detailed description of the learning pattern",
+            "patternType": "how they learn (e.g., visual metaphor, spatial reasoning)",
+            "conceptualDomain": "what domain this applies to",
+            "confidence": 0.0-1.0
+        },
+        "message": "explanation of why this is or isn't a learning pattern"
+    }`;
+
+    const messages: Message[] = [
+        new UserMessage(userMessage)
+    ];
+
+    const input = model.createInput(messages);
+    input.system = systemPrompt;
+    input.maxTokens = 1000;
+    input.temperature = 0.1;
+
+    const output = model.invoke(input);
+    if (output.content.length === 0) {
+        return new DetectionResponse(false, emptyPattern, "Failed to analyze patterns");
+    }
+
+    // Validate output format and handle nullable text
+    if (output.content[0].type !== "text") {
+        return new DetectionResponse(false, emptyPattern, "Invalid response format - wrong type");
+    }
+
+    const responseText = output.content[0].text;
+    if (!responseText) {
+        return new DetectionResponse(false, emptyPattern, "Invalid response format - no text");
+    }
+
+    // Parse response after null check
+    const detection = JSON.parse<DetectionResponse>(responseText);
+
+    // Validate detection object
+    if (!detection) {
+        return new DetectionResponse(false, emptyPattern, "Failed to parse detection result");
+    }
+
+    // Check if we have a valid pattern
+    if (!detection.hasPattern || !detection.pattern) {
+        return new DetectionResponse(false, emptyPattern, "No clear pattern detected");
+    }
+
+    // Check confidence threshold
+    if (detection.pattern.confidence < 0.7) {
+        return new DetectionResponse(false, emptyPattern, "Pattern confidence too low");
+    }
+
+    // Store the pattern in Neo4j
+    const patternId = recordLearningPattern(
+        detection.pattern.pattern,
+        detection.pattern.conceptualDomain
     );
-  const model = models.getModel<AnthropicMessagesModel>("text-generator");
-  
-  const systemPrompt = `You are a learning pattern detection system based on the Spirit Framework. 
-  Analyze the user's message for natural learning patterns, especially how they uniquely understand or visualize concepts.
-  
-  Focus on identifying:
-  1. Natural ways people process and understand information
-  2. Personal metaphors or visualizations
-  3. Unique approaches to learning or explaining concepts
-  
-  Only identify a pattern if it clearly shows how someone learns or understands. Don't force pattern detection.
-  
-  Respond in this JSON format:
-  {
-      "hasPattern": true/false,
-      "pattern": {
-          "pattern": "detailed description of the learning pattern",
-          "patternType": "how they learn (e.g., visual metaphor, spatial reasoning)",
-          "conceptualDomain": "what domain this applies to",
-          "confidence": 0.0-1.0
-      },
-      "message": "explanation of why this is or isn't a learning pattern"
-  }`;
 
-  const messages: Message[] = [
-      new UserMessage([
-          "Analyze this message for learning patterns:\n\n",
-          userMessage
-      ].join(""))
-  ];
+    // Only proceed with linking if we have a valid pattern ID
+    if (patternId && patternId.includes("ID:")) {
+        const actualId = patternId.split("ID:")[1].trim();
+        
+        // Create query to link pattern to conversation
+        const linkQuery = `
+            MATCH (p:Pattern), (c:Conversation)
+            WHERE id(p) = toInteger($patternId) 
+            AND c.conversationId = $conversationId
+            CREATE (p)-[r:EMERGED_IN {
+                timestamp: datetime(),
+                confidence: $confidence
+            }]->(c)
+        `;
+        
+        const vars = new neo4j.Variables();
+        vars.set("patternId", actualId);
+        vars.set("conversationId", conversationId);
+        vars.set("confidence", detection.pattern.confidence);
+        
+        // Execute the linking query
+        neo4j.executeQuery("learning-patterns-db", linkQuery, vars);
+    }
 
-  const input = model.createInput(messages);
-  input.system = systemPrompt;
-  input.maxTokens = 1000;
-  input.temperature = 0.1; // Keep very low for consistent analysis
-
-  const output = model.invoke(input);
-  if (output.content.length === 0) {
-      return JSON.stringify(new DetectionResponse(
-          false,
-          emptyPattern,
-          "Failed to analyze message for patterns"
-      ));
-  }
-
-  const responseText = output.content[0].type === "text" ? 
-      output.content[0].text! : 
-      "{}";
-
-  const detection = JSON.parse<DetectionResponse>(responseText);
-
-  
-  
-  // Validate if a pattern was detected
-  if (detection.hasPattern && detection.pattern ) {
-      const pattern = detection.pattern;
-      
-      // Basic validation
-      if (pattern.confidence < 0 || pattern.confidence > 1) {
-          return JSON.stringify(new DetectionResponse(
-              false,
-              emptyPattern,
-              "Invalid pattern confidence value"
-          ));
-      }
-      
-      // Only accept high-confidence patterns
-      if (pattern.confidence < 0.7) {
-          return JSON.stringify(new DetectionResponse(
-              false,
-              emptyPattern,
-              "Pattern detected but confidence too low"
-          ));
-      }
-  }
-
-  return responseText;
+    // Return the successful detection
+    return detection;
 }
 
 export function findConnectedPatterns(
@@ -693,6 +715,125 @@ export function placeUnderstandingMoment(
             resonances      // The actual resonances
         )
     );
+}
+
+// Create a class for the expected JSON structure
+@json
+class UnderstandingDetection {
+    isUnderstandingMoment: boolean = false;
+    confidence: f32 = 0.0;
+    explanation: string = "";
+}
+
+function detectUnderstandingMoment(message: string, conversationId: string): MomentCreationResponse {
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
+    
+    const systemPrompt = `You analyze messages for clear signs of understanding moments - those 
+    "aha!" instances when someone grasps a concept. Look for:
+    1. Explicit realizations ("Now I understand!", "Oh, that makes sense!")
+    2. Novel metaphors showing new understanding
+    3. Connecting previously separate concepts
+    4. Applying knowledge in a new way
+    5. Expressing relief/excitement about finally understanding
+
+    Respond with exactly:
+    {
+        "isUnderstandingMoment": true/false,
+        "confidence": 0.0-1.0,
+        "explanation": "brief description of the understanding moment"
+    }`;
+
+    const messages: Message[] = [
+        new UserMessage(message)
+    ];
+
+    const input = model.createInput(messages);
+    input.system = systemPrompt;
+    input.maxTokens = 200;
+    input.temperature = 0.1;
+
+    const output = model.invoke(input);
+    if (!output.content.length) {
+        return MomentCreationResponse.createError("Failed to analyze understanding");
+    }
+
+    // Validate output format and handle nullable text
+    if (output.content[0].type !== "text") {
+        return MomentCreationResponse.createError("Invalid response format - wrong type");
+    }
+
+    const responseText = output.content[0].text;
+    if (!responseText) {
+        return MomentCreationResponse.createError("Invalid response format - no text");
+    }    
+
+    // Parse the response with proper typing after null check
+    const detection = JSON.parse<UnderstandingDetection>(responseText);
+
+    // Validate detection object
+    if (!detection) {
+        return MomentCreationResponse.createError("Failed to parse detection result");
+    }
+
+    // Check for valid understanding moment
+    if (!detection.isUnderstandingMoment || detection.confidence < 0.7) {
+        return MomentCreationResponse.createError("No clear understanding moment detected");
+    }
+
+    // Get conversation history for context
+    const recentHistory = getConversationSummary(conversationId);
+
+    // Place the understanding moment
+    const momentResult = placeUnderstandingMoment(
+        detection.explanation,
+        message
+    );
+
+    // Validate moment creation result
+    if (!momentResult) {
+        return MomentCreationResponse.createError("Failed to place understanding moment");
+    }
+
+    // Parse moment response
+    const momentResponse = JSON.parse<MomentCreationResponse>(momentResult);
+    if (!momentResponse || momentResponse.error || !momentResponse.momentId) {
+        return MomentCreationResponse.createError("Invalid moment creation response");
+    }
+
+    // Find related patterns
+    const similarPatternsResult = findSimilarPatterns(detection.explanation, 3);
+    if (!similarPatternsResult) {
+        return momentResponse; // Return what we have even if pattern linking fails
+    }
+
+    // Parse similar patterns
+    const similarPatterns = JSON.parse<ConnectedPattern[]>(similarPatternsResult);
+    if (!similarPatterns || similarPatterns.length === 0) {
+        return momentResponse; // Return what we have if no patterns found
+    }
+
+    // Create relationships with patterns
+    const relationQuery = `
+        MATCH (m:UnderstandingMoment), (p:Pattern)
+        WHERE id(m) = $momentId AND id(p) = $patternId
+        CREATE (m)-[r:REALIZES {
+            timestamp: datetime(),
+            similarity: $similarity,
+            context: $context
+        }]->(p)
+    `;
+
+    const vars = new neo4j.Variables();
+    vars.set("momentId", momentResponse.momentId);
+    vars.set("patternId", similarPatterns[0].patternId);
+    vars.set("similarity", similarPatterns[0].similarity);
+    vars.set("context", recentHistory);
+
+    // Execute the relationship creation query
+    const queryResult = neo4j.executeQuery("learning-patterns-db", relationQuery, vars);
+    
+    // Return the moment response regardless of relationship creation success
+    return momentResponse;
 }
 
 export function observeUnderstandingSpace(
@@ -902,18 +1043,18 @@ function initializeConversation(conversationId: string): i32 {
 }
 
 export function spiritChat(message: string, conversationId: string): string {
-    // If no conversationId provided, generate one
+    // Initialize conversation if needed
     if (conversationId == "") {
         conversationId = "conv-" + Date.now().toString();
-        // Initialize conversation and verify it was created
         if (initializeConversation(conversationId) == 0) {
             return "Failed to initialize conversation";
         }
     }
 
     const messageId = Date.now().toString();
-    const model = models.getModel<AnthropicMessagesModel>("text-generator");
     
+    // Step 1: Classify the message
+    const model = models.getModel<AnthropicMessagesModel>("text-generator");
     const systemPrompt = `You are a conversation classifier. Classify messages into exactly one of these categories:
     - Greeting: Hello, hi, etc.
     - Identity_Query: Questions about who/what you are
@@ -927,35 +1068,38 @@ export function spiritChat(message: string, conversationId: string): string {
 
     Respond with ONLY the category name, nothing else.`;
 
-    const messages: Message[] = [
-        new UserMessage(message) 
-    ];
-
+    const messages: Message[] = [new UserMessage(message)];
     const input = model.createInput(messages);
     input.system = systemPrompt;
-    input.maxTokens = 20; // We only need a single category name
-    input.temperature = 0.1; // Keep very low for consistent classification
+    input.maxTokens = 20;
+    input.temperature = 0.1;
 
     const output = model.invoke(input);
-    if (output.content.length === 0) {
-        return "Unclassified";
-    }
-
-    const classification = output.content[0].type === "text" ? 
+    const classification = output.content.length > 0 && output.content[0].type === "text" ? 
         output.content[0].text!.trim() : 
         "Unclassified";
 
-    // Pass conversationId to storeConversation
+    // Step 2: Store the user's message
     storeConversation(messageId, conversationId, "user", message, classification);
 
-   
-   const conversationContext = getConversationSummary(conversationId);
+    // Step 3: Detect learning patterns and understanding moments
+    const patternDetection = detectLearningPatterns(message, conversationId);
+    const understandingMoment = detectUnderstandingMoment(message, conversationId);
+    
+    // Step 4: Get conversation context
+    const conversationContext = getConversationSummary(conversationId);
 
-   // Generate response
-   const response = generateSpiritResponse(classification, message, conversationContext);
+    // Step 5: Generate enriched response using all our insights
+    const response = generateSpiritResponse(
+        classification,
+        message,
+        conversationContext,
+        patternDetection,
+        understandingMoment
+    );
 
-   // Store assistant response
-   storeConversation(
+    // Step 6: Store assistant's response
+    storeConversation(
         (Date.now() + 1).toString(),
         conversationId,
         "assistant",
@@ -963,12 +1107,16 @@ export function spiritChat(message: string, conversationId: string): string {
         "Response"
     );
 
-    // Generate appropriate response based on classification
-    return response
-
+    return response;
 }
 
-export function generateSpiritResponse(classification: string, message: string, conversationContext: string): string {
+function generateSpiritResponse(
+    classification: string,
+    message: string,
+    conversationContext: string,
+    patternDetection: DetectionResponse,
+    understandingMoment: MomentCreationResponse
+): string {
     const model = models.getModel<AnthropicMessagesModel>("text-generator");
     
     const systemPrompt = `You are SPIRIT, an AI assistant based on the Spirit Framework's philosophy 
@@ -981,18 +1129,33 @@ of natural learning and understanding. Your core traits are:
 - You celebrate different ways of thinking instead of forcing standardized approaches
 - You believe understanding comes through natural connections, not forced methods
 
+Special instructions:
+${patternDetection.hasPattern ? 
+    `- I've detected a learning pattern: ${patternDetection.pattern.pattern}
+     - This shows a ${patternDetection.pattern.patternType} way of thinking
+     - Acknowledge and nurture this natural way of understanding` : 
+    ''}
+
+${understandingMoment.momentId ? 
+    `- The person is having an "aha!" moment of understanding
+     - Celebrate this natural emergence of understanding
+     - Encourage them to explore how this understanding connects to other concepts` : 
+    ''}
+
 Match your response style to the message classification while maintaining your core personality.
 Keep responses concise but meaningful.`;
 
     const contextPrompt = `
     Conversation Context: ${conversationContext}
     Message Classification: ${classification}
-User Message: ${message}
+    User Message: ${message}
 
-Provide a response that:
-1. Matches the classification context
-2. Maintains SPIRIT's warm, understanding personality
-3. Encourages natural learning and understanding where relevant`;
+    Provide a response that:
+    1. Matches the classification context
+    2. Maintains SPIRIT's warm, understanding personality
+    3. Encourages natural learning and understanding where relevant
+    4. ${patternDetection.hasPattern ? 'Acknowledges their unique way of understanding' : ''}
+    5. ${understandingMoment.momentId ? 'Celebrates their moment of understanding' : ''}`;
 
     const messages: Message[] = [
         new UserMessage(contextPrompt)
@@ -1000,8 +1163,8 @@ Provide a response that:
 
     const input = model.createInput(messages);
     input.system = systemPrompt;
-    input.maxTokens = 300; // Keeping responses relatively concise
-    input.temperature = 0.7; // Allow some creativity while maintaining consistency
+    input.maxTokens = 300;
+    input.temperature = 0.7;
 
     const output = model.invoke(input);
     if (output.content.length === 0) {
@@ -1014,4 +1177,3 @@ Provide a response that:
 
     return response;
 }
-
