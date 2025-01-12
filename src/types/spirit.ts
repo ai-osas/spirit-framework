@@ -1,3 +1,5 @@
+// src/types/spirit.ts
+
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -26,14 +28,12 @@ export interface Pattern {
   patternId: string;
   observation: string;
   context: string;
+  patternType: string;
   confidence: number;
   timestamp: string;
 }
 
 export interface PatternsResponse {
-  data: {
-    getConversationPatterns: {
-      patterns: Pattern[];
-    }
-  }
+  patterns: Pattern[];
+  message: string;       // Added to match backend response
 }

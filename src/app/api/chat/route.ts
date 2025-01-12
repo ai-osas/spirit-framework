@@ -1,3 +1,5 @@
+// src/app/api/chat/route.ts
+
 import { NextResponse } from 'next/server'
 import type { SpiritChatResponse, SpiritChatVariables } from '@/types/spirit'
 
@@ -39,6 +41,10 @@ export async function POST(request: Request) {
         variables,
       })
     })
+
+    // src/app/api/chat/route.ts
+  // After processing chat and before returning response
+  console.log('Chat processing completed, conversationId:', variables.conversationId);
 
     // Check if the response is ok
     if (!response.ok) {

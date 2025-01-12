@@ -1,3 +1,5 @@
+// src/components/SpiritInterface.tsx
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -40,7 +42,7 @@ const SpiritInterface = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    setMessageCount(prev => prev + 1);
+    
 
     try {
       const response = await fetch('/api/chat', {
@@ -61,6 +63,8 @@ const SpiritInterface = () => {
         content: result.data.spiritChat,
         timestamp: new Date().toISOString()
       }]);
+
+      setMessageCount(prev => prev + 1);
 
     } catch (error) {
       console.error('Error:', error);
@@ -147,7 +151,7 @@ const SpiritInterface = () => {
         </div>
       </div>
 
-      <LearningPatternsPanel conversationId={conversationId} messageCount={messageCount}/>
+      <LearningPatternsPanel conversationId={conversationId} />
     </div>
   );
 };
