@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Send, Sparkles, RefreshCcw } from 'lucide-react';
 import type { Message, SpiritChatResponse } from '@/types/spirit';
+import { LearningPatternsPanel } from './LearningPatternsPanel';
 
 const SpiritInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [conversationId, setConversationId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
   
   // Function to generate a new conversation ID
   const startNewConversation = () => {
@@ -38,6 +40,7 @@ const SpiritInterface = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
+    setMessageCount(prev => prev + 1);
 
     try {
       const response = await fetch('/api/chat', {
@@ -144,15 +147,7 @@ const SpiritInterface = () => {
         </div>
       </div>
 
-      <div className="w-80 border-l bg-white p-4 overflow-auto hidden md:block">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5" />
-          Learning Patterns
-        </h2>
-        <p className="text-gray-500 text-sm">
-          As you share your thoughts, I'll observe any natural learning patterns that emerge.
-        </p>
-      </div>
+      <LearningPatternsPanel conversationId={conversationId} messageCount={messageCount}/>
     </div>
   );
 };
