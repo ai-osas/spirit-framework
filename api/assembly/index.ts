@@ -835,6 +835,7 @@ export function recommendPatterns(userProblem: string): string {
 }
 
 export function getConversationPatterns(conversationId: string): string {
+    console.log(`Getting patterns for conversation: ${conversationId}`);
     const dbConnection = "learning-patterns-db";
     
     const query = `
@@ -849,6 +850,7 @@ export function getConversationPatterns(conversationId: string): string {
     `;
 
     const vars = new neo4j.Variables();
+    
     vars.set("conversationId", conversationId);
 
     const result = neo4j.executeQuery(dbConnection, query, vars);
