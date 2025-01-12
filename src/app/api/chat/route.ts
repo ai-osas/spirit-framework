@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       console.error('Hypermode API key not found')
       throw new Error('API key not configured')
     }
-
+    // Test 
     console.log('Modus Endpoint:', modusEndpoint)
 
     const query = `
