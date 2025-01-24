@@ -1,24 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Brain,
   Code,
   Heart,
-  Users,
   Github,
   Download,
   Coffee,
-  Mail,
-  MessageSquare,
   Sparkles,
   Book,
-  GitPullRequest,
-  DollarSign,
-  Menu,
-  X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
@@ -27,7 +20,6 @@ import Navigation from '@/components/Nav';
 
 export default function SpiritWebsitePreview() {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
 
   const applications = [
     {

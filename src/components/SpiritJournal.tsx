@@ -5,8 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Brain, Star, ArrowRight, Book, Search,
-  Plus, Users, Filter, Settings, Calendar,
+  Brain, Star, ArrowRight, Book,
+  Plus, Users, Filter, Calendar,
   MessageCircle, Send, X
 } from 'lucide-react';
 import Footer from '@/components/Footer';
