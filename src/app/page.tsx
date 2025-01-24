@@ -1,5 +1,6 @@
 import SpiritInterface from '@/components/SpiritInterface';
+import SpiritWebsitePreview from '@/components/SpiritWebsite'; 
 
 export default function Home() {
-  return <SpiritInterface />;
+  return <SpiritWebsitePreview />;
 }
