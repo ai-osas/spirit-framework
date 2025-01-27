@@ -8,6 +8,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import Image from 'next/image';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,7 +19,14 @@ const Navigation = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="font-bold text-xl">Spirit</Link>
+          <Link href="/" className="flex items-center gap-2">
+            <Image 
+              src="2.svg" 
+              alt="Spirit Logo" 
+              width={60} 
+              height={60} 
+            />
+          </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -33,7 +41,19 @@ const Navigation = () => {
             >
               Blog
             </a>
-            <Button size="sm" onClick={() => router.push('/')}>Get Started</Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => router.push('/auth/login')}
+            >
+              Sign in
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={() => router.push('/auth/register')}
+            >
+              Sign up
+            </Button>
           </div>
 
           <div className="md:hidden">

@@ -7,6 +7,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Spirit Framework",
   description: "A natural learning pattern recognition system",
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  }
 };
 
 export default function RootLayout({

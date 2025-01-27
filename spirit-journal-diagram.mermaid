@@ -1,0 +1,61 @@
+flowchart TB
+    subgraph FE[Frontend Layer]
+        UI[User Interface]
+        subgraph Free[Free Features]
+            BE[Basic Editor]
+            BP[Basic Patterns]
+            BV[Basic Visualization]
+            BC[Basic Community]
+        end
+        subgraph Prem[Premium Features]
+            AE[Advanced Editor]
+            AP[AI Pattern Analysis]
+            AV[Advanced Visualization]
+            AC[Advanced Community]
+        end
+    end
+
+    subgraph Auth[Authentication Layer]
+        AS[Auth Service]
+        PC[Premium Check]
+    end
+
+    subgraph BE[Backend Layer]
+        subgraph CoreServices[Core Services]
+            JS[Journal Service]
+            PS[Pattern Service]
+            US[User Service]
+        end
+        subgraph PremServices[Premium Services]
+            AI[AI Analysis Service]
+            CS[Collaboration Service]
+            APS[Advanced Pattern Service]
+        end
+    end
+
+    subgraph DB[Data Layer]
+        Database[(Database)]
+        FileStore[(File Storage)]
+    end
+
+    UI --> BE & BP & BV & BC
+    UI --> AE & AP & AV & AC
+    UI --> AS
+    AS --> PC
+    PC --> Prem
+
+    BE & BP --> JS
+    BV & BC --> PS
+    AE --> JS
+    AP --> AI
+    AV --> APS
+    AC --> CS
+
+    JS & PS & US --> Database
+    AI & CS & APS --> Database
+    BE & AE --> FileStore
+
+    style Free fill:#d4f1f9
+    style Prem fill:#ffe6e6
+    style Auth fill:#fff2cc
+    style DB fill:#e6e6e6
