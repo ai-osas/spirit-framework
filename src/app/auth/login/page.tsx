@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Chrome } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,15 +16,18 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <Image
-              src="/2.svg"
-              alt="Spirit Logo"
-              width={60}
-              height={60}
+          <Link href="/" className="flex items-center gap-2">
+            <Image 
+              src="/2.svg" 
+              alt="Spirit Logo" 
+              width={60} 
+              height={60} 
             />
+          </Link>
           </div>
           <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
         </CardHeader>

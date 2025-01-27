@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Chrome } from 'lucide-react';
+import Link from 'next/link';
+
 
 
 export default function RegisterPage() {
@@ -19,12 +21,14 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <Image
-              src="/2.svg"
-              alt="Spirit Logo"
-              width={60}
-              height={60}
+          <Link href="/" className="flex items-center gap-2">
+            <Image 
+              src="/2.svg" 
+              alt="Spirit Logo" 
+              width={60} 
+              height={60} 
             />
+          </Link>
           </div>
           <CardTitle className="text-2xl text-center">Create an account</CardTitle>
         </CardHeader>
