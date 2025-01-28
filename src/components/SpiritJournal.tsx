@@ -1,3 +1,4 @@
+// src/components/SpiritJournal.tsx
 "use client";
 
 import React, { useState } from 'react';
@@ -9,6 +10,11 @@ import {
   Plus, Users, Filter, Calendar,
   MessageCircle, Send, X
 } from 'lucide-react';
+
+import { useWalkthrough } from '@/components/walkthrough/WalkthroughProvider';
+import { WalkthroughHighlight } from '@/components/walkthrough/WalkthroughHighlight'; 
+import { WalkthroughTooltip } from '@/components/walkthrough/WalkthroughToolTip'; 
+
 
 interface ChatDialogProps {
   isOpen: boolean;
@@ -57,9 +63,38 @@ const ChatDialog: React.FC<ChatDialogProps> = ({ isOpen, onClose }) => {
 
 const SpiritJournal = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
+  const { currentStep, steps, start, next, end, isActive } = useWalkthrough();
+
+  const startWalkthrough = () => {
+    start();
+  };
+
+  const nextStep = () => {
+    next();
+  };
+
+  const doneWalkthrough = () => {
+    end();
+  };
+
+  const currentStepData = steps[currentStep ?? 0];
+
   return (
     <div className="flex relative h-[calc(100vh-64px)]">
+      {/* Walkthrough Overlay and Tooltip */}
+      {isActive && currentStep !== null && (
+        <>
+          <WalkthroughHighlight targetSelector={currentStepData.target} />
+          <WalkthroughTooltip
+            step={currentStepData}
+            position={{ top: '50%', left: '50%' }} // Adjust position as needed
+            onNext={nextStep}
+            onDone={doneWalkthrough}
+            isLastStep={currentStep === steps.length - 1}
+          />
+        </>
+      )}
+
       {/* Sidebar */}
       <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r p-4 overflow-y-auto z-10">
         <div className="flex items-center gap-2 mb-8">
@@ -68,7 +103,7 @@ const SpiritJournal = () => {
         </div>
 
         <div className="space-y-6">
-          <Button variant="outline" className="w-full justify-start gap-2">
+          <Button variant="outline" className="w-full justify-start gap-2 new-entry-button">
             <Plus className="w-4 h-4" />
             New Entry
           </Button>
@@ -111,9 +146,9 @@ const SpiritJournal = () => {
                 <Calendar className="w-4 h-4 mr-2" />
                 Timeline
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={startWalkthrough}>
                 <Plus className="w-4 h-4 mr-2" />
-                New Pattern
+                Start Walkthrough
               </Button>
             </div>
           </header>
@@ -121,7 +156,7 @@ const SpiritJournal = () => {
           {/* Pattern Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
             {/* Active Learning Card */}
-            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-none">
+            <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-none active-learning-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -182,17 +217,14 @@ const SpiritJournal = () => {
 
       {/* Chat Toggle Button */}
       <Button
-        className="fixed bottom-4 right-4 rounded-full h-12 w-12 shadow-lg z-40 bg-blue-600 hover:bg-blue-700"
+        className="fixed bottom-4 right-4 rounded-full h-12 w-12 shadow-lg z-40 bg-blue-600 hover:bg-blue-700 chat-toggle-button"
         onClick={() => setIsChatOpen(!isChatOpen)}
       >
         <MessageCircle className="w-5 h-5 text-white" />
       </Button>
 
       {/* Chat Dialog */}
-      <ChatDialog 
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-      />
+      <ChatDialog isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 };
