@@ -14,9 +14,6 @@ import {
   Book,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import Footer from '@/components/Footer';
-import Navigation from '@/components/Nav';
-
 
 export default function SpiritWebsitePreview() {
   const router = useRouter();
@@ -41,12 +38,10 @@ export default function SpiritWebsitePreview() {
       description: "VS Code learning extension",
       status: "Alpha"
     }
-  ]
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col border rounded-lg overflow-hidden">
-      <Navigation />
-      
+    <>
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-50 to-purple-50 pt-32 pb-20">
         <div className="max-w-6xl mx-auto px-4">
@@ -190,9 +185,6 @@ export default function SpiritWebsitePreview() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <Footer />
-    </div>
+    </>
   );
 }
