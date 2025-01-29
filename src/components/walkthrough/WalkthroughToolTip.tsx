@@ -7,7 +7,7 @@ import { WalkthroughStep } from './types';
 
 interface TooltipProps {
   step: WalkthroughStep;
-  position: Record<string, any>;
+  position: Record<string, string | number>;
   onNext: () => void;
   onDone: () => void;
   isLastStep: boolean;

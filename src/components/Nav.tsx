@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,11 +10,10 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { getStoredTokens } from '@/lib/auth';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, logout, refreshToken, loading } = useAuth();
+  const { isAuthenticated, logout, loading } = useAuth();
   const router = useRouter();
 
   // Loading state

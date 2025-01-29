@@ -49,7 +49,7 @@ export default function LoginPage() {
       
       // Redirect directly to Django's OAuth endpoint
       window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google/login/?from=${encodeURIComponent(origin)}`;
-    } catch (err) {
+    } catch {
       setError('Failed to initiate login. Please try again.');
       setIsLoading(false);
     }

@@ -1,12 +1,18 @@
-// src/contexts/AuthContext.tsx
 "use client";
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getStoredTokens, storeAuthTokens, removeStoredTokens } from '@/lib/auth';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  // Add other user properties as needed
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null;
+  user: User | null;
   loading: boolean;
   login: (tokens: { access_token: string; refresh_token: string }) => Promise<void>;
   logout: () => void;
@@ -17,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -135,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearInterval(refreshInterval);
       }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, refreshToken]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -172,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
-  }, []);
+  }, [login, refreshToken]);
 
   return (
     <AuthContext.Provider value={{
