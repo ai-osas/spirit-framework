@@ -26,6 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const logout = useCallback(() => {
+    console.log("Logging out...");
+    removeStoredTokens();
+    setIsAuthenticated(false);
+    setUser(null);
+    router.push('/');
+  }, [router]);
+
   const fetchUserProfile = useCallback(async () => {
     try {
       console.log("Fetching user profile...");
@@ -92,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout();
       return false;
     }
-  }, []);
+  }, [logout]);
 
   const login = useCallback(async (tokens: { access_token: string; refresh_token: string }) => {
     console.log("Login called with tokens");
@@ -108,14 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error fetching profile during login:", error);
     }
   }, [fetchUserProfile]);
-
-  const logout = useCallback(() => {
-    console.log("Logging out...");
-    removeStoredTokens();
-    setIsAuthenticated(false);
-    setUser(null);
-    router.push('/');
-  }, [router]);
 
   // Handle authentication initialization
   useEffect(() => {

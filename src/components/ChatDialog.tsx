@@ -1,4 +1,3 @@
-// src/components/ChatDialog.tsx
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { Brain, Send, X } from 'lucide-react';
@@ -14,7 +13,7 @@ interface ChatDialogProps {
 }
 
 export const ChatDialog: React.FC<ChatDialogProps> = ({ isOpen, onClose }) => {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([{
     content: "How would you like to explore your learning patterns today?",
     sender: 'assistant'
@@ -40,35 +39,35 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-        const tokens = getStoredTokens();
-        if (!tokens?.access_token) {
-          throw new Error('No auth token available');
-        }
-  
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tokens.access_token}`
-          },
-          body: JSON.stringify({
-            message: content,
-            user: {
-              id: user?.id,
-              name: user?.name,
-              email: user?.email
-            }
-          }),
-        });
+      const tokens = getStoredTokens();
+      if (!tokens?.access_token) {
+        throw new Error('No auth token available');
+      }
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Chat error:', errorText);
-            throw new Error(`Server responded with ${response.status}`);
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tokens.access_token}`
+        },
+        body: JSON.stringify({
+          message: content,
+          user: {
+            id: user?.id,
+            name: user?.name,
+            email: user?.email
           }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Chat error:', errorText);
+        throw new Error(`Server responded with ${response.status}`);
+      }
 
       const data: ChatResponse = await response.json();
-      
+
       if (data.message) {
         setMessages(prev => [...prev, {
           content: data.message,
@@ -76,14 +75,14 @@ export const ChatDialog: React.FC<ChatDialogProps> = ({ isOpen, onClose }) => {
         }]);
 
         if (Array.isArray(data.followUpQuestions)) {
-            setFollowUps(data.followUpQuestions.map(q => ({
-              question: q,
-              isSelected: false
-            })));
-          }
+          setFollowUps(data.followUpQuestions.map(q => ({
+            question: q,
+            isSelected: false
+          })));
         }
-      } catch (error) {
-        console.error('Failed to send message:', error);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
 
       // Check if it's an auth error
       if (error instanceof Error && error.message.includes('401')) {
