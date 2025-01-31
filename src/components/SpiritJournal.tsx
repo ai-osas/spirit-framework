@@ -14,10 +14,12 @@ import { useWalkthrough } from '@/components/walkthrough/WalkthroughProvider';
 import { WalkthroughHighlight } from '@/components/walkthrough/WalkthroughHighlight'; 
 import { WalkthroughTooltip } from '@/components/walkthrough/WalkthroughToolTip'; 
 
+import { useRouter } from 'next/navigation';
+
 const SpiritJournal = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { currentStep, steps, start, next, end, isActive } = useWalkthrough();
-
+  const router = useRouter();
   const startWalkthrough = () => {
     start();
   };
@@ -56,10 +58,14 @@ const SpiritJournal = () => {
         </div>
 
         <div className="space-y-6">
-          <Button variant="outline" className="w-full justify-start gap-2 new-entry-button">
-            <Plus className="w-4 h-4" />
-            New Entry
-          </Button>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start gap-2 new-entry-button"
+          onClick={() => router.push('/journal/new')}
+        >
+          <Plus className="w-4 h-4" />
+          New Entry
+        </Button>
 
           <div className="space-y-2">
             <h2 className="text-sm font-medium text-gray-500">YOUR PATTERNS</h2>
