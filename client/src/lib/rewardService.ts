@@ -61,7 +61,7 @@ export async function calculateEntryReward(
   entry: JournalEntry, 
   previousEntry?: JournalEntry
 ): Promise<bigint> {
-  // Basic content length check - removed word/char ratio check as it's too restrictive
+  // Basic content length check
   const contentLength = entry.content.trim().length;
   console.log('Content length:', contentLength); // Debug log
 
@@ -119,19 +119,6 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
-    // First check if the distribution contract has allowance
-    const tokenContract = new ethers.Contract(
-      SPIRIT_TOKEN_ADDRESS,
-      ['function allowance(address owner, address spender) view returns (uint256)'],
-      provider
-    );
-
-    const allowance = await tokenContract.allowance(SPIRIT_TOKEN_ADDRESS, REWARD_DISTRIBUTION_ADDRESS);
-    if (allowance === 0n) {
-      console.error('RewardDistribution contract not approved for token distribution');
-      return false;
-    }
-
     // Create reward contract instance
     const rewardContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS,
@@ -140,6 +127,12 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     );
 
     // Get total supply to check distribution limit
+    const tokenContract = new ethers.Contract(
+      SPIRIT_TOKEN_ADDRESS,
+      ['function totalSupply() view returns (uint256)', 'function balanceOf(address) view returns (uint256)'],
+      provider
+    );
+
     const totalSupply = await tokenContract.totalSupply();
     const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / 100n;
 
