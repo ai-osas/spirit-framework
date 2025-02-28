@@ -5,12 +5,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { analyzeLearningPatterns } from '@/lib/openai';
+import { useLocation } from 'wouter';
 
 interface Props {
   entries: JournalEntry[];
 }
 
 export function LearningConstellation({ entries }: Props) {
+  const [_, navigate] = useLocation();
   // Use React Query for caching the AI analysis
   const { data: patterns = [], isLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
@@ -86,7 +88,11 @@ export function LearningConstellation({ entries }: Props) {
             </span>
           </div>
 
-          <Button variant="ghost" className="w-full justify-between">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-between"
+            onClick={() => navigate(`/journal/pattern/${index + 1}`)}
+          >
             Explore Pattern
             <ChevronRight className="w-4 h-4" />
           </Button>

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import JournalPage from "@/pages/journal";
 import NewJournalPage from "@/pages/journal/new";
 import EditJournalPage from "@/pages/journal/[id]";
+import ExplorePatternPage from "@/pages/journal/pattern/[id]";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
           <Route path="/journal" component={JournalPage} />
           <Route path="/journal/new" component={NewJournalPage} />
           <Route path="/journal/:id" component={EditJournalPage} />
+          <Route path="/journal/pattern/:id" component={ExplorePatternPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
