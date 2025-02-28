@@ -163,7 +163,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
             if (success) {
               toast({
                 title: "Reward Earned!",
-                description: `You've earned SPIRIT tokens for your quality journal entry! The amount is based on content length, media attachments, and posting consistency.`,
+                description: `You've earned SPIRIT tokens for your journal entry! Rewards increase with longer entries, media attachments, and daily entries.`,
               });
 
               queryClient.invalidateQueries({ queryKey: ['token-balance'] });
@@ -177,7 +177,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           } else {
             toast({
               title: "No Reward Earned",
-              description: "Entry doesn't meet reward criteria. Add more meaningful content (min 200 chars), media, or maintain daily consistency!",
+              description: "Journal entries need to be at least 200 characters long to earn rewards. Add media or maintain daily entries for bonus rewards!",
             });
           }
         } catch (rewardError: any) {

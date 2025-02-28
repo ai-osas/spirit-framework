@@ -42,8 +42,7 @@ const REWARD_CRITERIA = {
   // Prevent spam/low quality content
   PENALTIES: {
     REPETITIVE_CONTENT: 0.5, // 50% reduction for similar content to previous entries
-    MAX_DAILY_ENTRIES: 3,    // Maximum rewarded entries per day
-    MIN_WORDS_PER_CHAR: 0.2  // Minimum ratio of words to characters (prevents character spam)
+    MAX_DAILY_ENTRIES: 3     // Maximum rewarded entries per day
   }
 };
 
@@ -58,18 +57,16 @@ function isRepetitiveContent(content: string, previousContent?: string): boolean
   return commonWords.size / contentWords.size > 0.8; // If 80% words are same, consider repetitive
 }
 
-function checkWordCharRatio(content: string): boolean {
-  const words = content.trim().split(/\s+/).length;
-  const chars = content.replace(/\s+/g, '').length;
-  return (words / chars) >= REWARD_CRITERIA.PENALTIES.MIN_WORDS_PER_CHAR;
-}
-
 export async function calculateEntryReward(
   entry: JournalEntry, 
   previousEntry?: JournalEntry
 ): Promise<bigint> {
-  // Basic content quality checks
-  if (entry.content.length < REWARD_CRITERIA.MIN_CONTENT_LENGTH || !checkWordCharRatio(entry.content)) {
+  // Basic content length check - removed word/char ratio check as it's too restrictive
+  const contentLength = entry.content.trim().length;
+  console.log('Content length:', contentLength); // Debug log
+
+  if (contentLength < REWARD_CRITERIA.MIN_CONTENT_LENGTH) {
+    console.log('Content too short'); // Debug log
     return 0n;
   }
 
@@ -81,9 +78,9 @@ export async function calculateEntryReward(
   }
 
   // Content length bonuses
-  if (entry.content.length >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.LONG.chars) {
+  if (contentLength >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.LONG.chars) {
     reward += REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.LONG.reward;
-  } else if (entry.content.length >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.MEDIUM.chars) {
+  } else if (contentLength >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.MEDIUM.chars) {
     reward += REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.MEDIUM.reward;
   }
 
