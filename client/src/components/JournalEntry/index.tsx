@@ -161,13 +161,11 @@ export default function JournalEntry({ id }: JournalEntryProps) {
             const success = await distributeReward(account, rewardAmount);
 
             if (success) {
-              // Show success toast
               toast({
-                title: "Reward Distributed!",
-                description: `You've earned SPIRIT tokens for your journal entry! Check your balance.`,
+                title: "Reward Earned!",
+                description: `You've earned SPIRIT tokens for your quality journal entry! The amount is based on content length, media attachments, and posting consistency.`,
               });
 
-              // Invalidate token balance query to reflect new balance
               queryClient.invalidateQueries({ queryKey: ['token-balance'] });
             } else {
               toast({
@@ -179,7 +177,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           } else {
             toast({
               title: "No Reward Earned",
-              description: "This entry didn't meet the minimum criteria for earning SPIRIT tokens. Try adding more meaningful content!",
+              description: "Entry doesn't meet reward criteria. Add more meaningful content (min 200 chars), media, or maintain daily consistency!",
             });
           }
         } catch (rewardError: any) {

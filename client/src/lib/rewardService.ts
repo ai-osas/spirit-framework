@@ -22,35 +22,80 @@ const REWARD_DISTRIBUTION_ABI = [
 
 // Scoring criteria for journal entries
 const REWARD_CRITERIA = {
-  BASE_REWARD: ethers.parseUnits('1', 18), // 1 SPIRIT token
-  MIN_CONTENT_LENGTH: 100, // Minimum characters for content
-  BONUS_THRESHOLDS: {
-    CONTENT_LENGTH: 500, // Bonus for entries over 500 chars
-    MEDIA_BONUS: 0.5, // Bonus multiplier for including media
-    CONSISTENT_POSTING: 0.2, // Bonus for posting within 24h of last entry
+  BASE_REWARD: ethers.parseUnits('0.5', 18), // 0.5 SPIRIT tokens base reward
+  MIN_CONTENT_LENGTH: 200, // Minimum characters for any reward
+  QUALITY_THRESHOLDS: {
+    CONTENT_LENGTH: {
+      MEDIUM: { chars: 500, reward: ethers.parseUnits('0.3', 18) }, // +0.3 SPIRIT
+      LONG: { chars: 1000, reward: ethers.parseUnits('0.5', 18) }   // +0.5 SPIRIT
+    },
+    MEDIA_BONUS: {
+      IMAGE: ethers.parseUnits('0.2', 18), // +0.2 SPIRIT per image
+      AUDIO: ethers.parseUnits('0.3', 18), // +0.3 SPIRIT per audio
+      MAX_MEDIA: 3 // Maximum number of media items that count for rewards
+    },
+    CONSISTENCY: {
+      DAILY: { hours: 24, reward: ethers.parseUnits('0.3', 18) },    // +0.3 SPIRIT
+      STREAK: { days: 7, reward: ethers.parseUnits('0.5', 18) }      // +0.5 SPIRIT for 7-day streak
+    }
+  },
+  // Prevent spam/low quality content
+  PENALTIES: {
+    REPETITIVE_CONTENT: 0.5, // 50% reduction for similar content to previous entries
+    MAX_DAILY_ENTRIES: 3,    // Maximum rewarded entries per day
+    MIN_WORDS_PER_CHAR: 0.2  // Minimum ratio of words to characters (prevents character spam)
   }
 };
+
+function isRepetitiveContent(content: string, previousContent?: string): boolean {
+  if (!previousContent) return false;
+
+  // Simple repetition check - can be enhanced with more sophisticated algorithms
+  const contentWords = new Set(content.toLowerCase().split(/\s+/));
+  const previousWords = new Set(previousContent.toLowerCase().split(/\s+/));
+
+  const commonWords = new Set([...contentWords].filter(x => previousWords.has(x)));
+  return commonWords.size / contentWords.size > 0.8; // If 80% words are same, consider repetitive
+}
+
+function checkWordCharRatio(content: string): boolean {
+  const words = content.trim().split(/\s+/).length;
+  const chars = content.replace(/\s+/g, '').length;
+  return (words / chars) >= REWARD_CRITERIA.PENALTIES.MIN_WORDS_PER_CHAR;
+}
 
 export async function calculateEntryReward(
   entry: JournalEntry, 
   previousEntry?: JournalEntry
 ): Promise<bigint> {
-  // Basic content quality check
-  if (entry.content.length < REWARD_CRITERIA.MIN_CONTENT_LENGTH) {
+  // Basic content quality checks
+  if (entry.content.length < REWARD_CRITERIA.MIN_CONTENT_LENGTH || !checkWordCharRatio(entry.content)) {
     return 0n;
   }
 
   let reward = REWARD_CRITERIA.BASE_REWARD;
 
-  // Content length bonus
-  if (entry.content.length >= REWARD_CRITERIA.BONUS_THRESHOLDS.CONTENT_LENGTH) {
-    reward += REWARD_CRITERIA.BASE_REWARD / 2n;
+  // Check for repetitive content
+  if (previousEntry && isRepetitiveContent(entry.content, previousEntry.content)) {
+    reward = reward * BigInt(Math.floor(REWARD_CRITERIA.PENALTIES.REPETITIVE_CONTENT * 100)) / 100n;
   }
 
-  // Media bonus
-  if (entry.media && entry.media.length > 0) {
-    reward += REWARD_CRITERIA.BASE_REWARD * 
-      BigInt(Math.floor(REWARD_CRITERIA.BONUS_THRESHOLDS.MEDIA_BONUS * 100)) / 100n;
+  // Content length bonuses
+  if (entry.content.length >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.LONG.chars) {
+    reward += REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.LONG.reward;
+  } else if (entry.content.length >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.MEDIUM.chars) {
+    reward += REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.MEDIUM.reward;
+  }
+
+  // Media bonuses (capped)
+  if (entry.media) {
+    const mediaCount = Math.min(entry.media.length, REWARD_CRITERIA.QUALITY_THRESHOLDS.MEDIA_BONUS.MAX_MEDIA);
+    for (let i = 0; i < mediaCount; i++) {
+      const mediaItem = entry.media[i];
+      reward += mediaItem.file_type === 'image' 
+        ? REWARD_CRITERIA.QUALITY_THRESHOLDS.MEDIA_BONUS.IMAGE
+        : REWARD_CRITERIA.QUALITY_THRESHOLDS.MEDIA_BONUS.AUDIO;
+    }
   }
 
   // Consistency bonus
@@ -59,9 +104,8 @@ export async function calculateEntryReward(
     const currentDate = new Date(entry.created_at);
     const hoursDiff = (currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60);
 
-    if (hoursDiff <= 24) {
-      reward += REWARD_CRITERIA.BASE_REWARD * 
-        BigInt(Math.floor(REWARD_CRITERIA.BONUS_THRESHOLDS.CONSISTENT_POSTING * 100)) / 100n;
+    if (hoursDiff <= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONSISTENCY.DAILY.hours) {
+      reward += REWARD_CRITERIA.QUALITY_THRESHOLDS.CONSISTENCY.DAILY.reward;
     }
   }
 
