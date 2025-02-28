@@ -35,6 +35,11 @@ export async function calculateEntryReward(
   entry: JournalEntry, 
   previousEntry?: JournalEntry
 ): Promise<bigint> {
+  // Basic content quality check
+  if (entry.content.length < REWARD_CRITERIA.MIN_CONTENT_LENGTH) {
+    return 0n;
+  }
+
   let reward = REWARD_CRITERIA.BASE_REWARD;
 
   // Content length bonus

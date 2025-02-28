@@ -147,6 +147,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       if (id) {
         await updateEntryMutation.mutateAsync({ id, data: entryData });
       } else {
+        // First save the entry
         await createEntryMutation.mutateAsync(entryData);
 
         // Calculate and distribute reward for new entries
@@ -155,22 +156,30 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           const previousEntry = entries[entries.length - 1];
           const rewardAmount = await calculateEntryReward(entryData, previousEntry);
 
-          const success = await distributeReward(account, rewardAmount);
+          // Only attempt distribution if there's a reward to give
+          if (rewardAmount > 0n) {
+            const success = await distributeReward(account, rewardAmount);
 
-          if (success) {
-            // Show success toast
-            toast({
-              title: "Reward Distributed!",
-              description: `You've earned SPIRIT tokens for your journal entry! Check your balance.`,
-            });
+            if (success) {
+              // Show success toast
+              toast({
+                title: "Reward Distributed!",
+                description: `You've earned SPIRIT tokens for your journal entry! Check your balance.`,
+              });
 
-            // Invalidate token balance query to reflect new balance
-            queryClient.invalidateQueries({ queryKey: ['token-balance'] });
+              // Invalidate token balance query to reflect new balance
+              queryClient.invalidateQueries({ queryKey: ['token-balance'] });
+            } else {
+              toast({
+                variant: "destructive",
+                title: "Reward Distribution Failed",
+                description: "Failed to distribute SPIRIT tokens. Please try again later.",
+              });
+            }
           } else {
             toast({
-              variant: "destructive",
-              title: "Reward Distribution Failed",
-              description: "Failed to distribute SPIRIT tokens. Please try again later.",
+              title: "No Reward Earned",
+              description: "This entry didn't meet the minimum criteria for earning SPIRIT tokens. Try adding more meaningful content!",
             });
           }
         } catch (rewardError: any) {

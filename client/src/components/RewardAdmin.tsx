@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
+const ADMIN_WALLET = '0xcb2FCB4802eBc2c17b7f06C12b03918c85faC2d0';
 
 // ABI for token approval and balance checks
 const TOKEN_ABI = [
@@ -24,9 +25,12 @@ export function RewardAdmin() {
   const [distributorBalance, setDistributorBalance] = useState<string>('0');
   const [totalSupply, setTotalSupply] = useState<string>('0');
 
+  // Only proceed if the connected wallet is the admin wallet
+  const isAdmin = account?.toLowerCase() === ADMIN_WALLET.toLowerCase();
+
   useEffect(() => {
     const fetchContractInfo = async () => {
-      if (!account || !window.ethereum) return;
+      if (!account || !window.ethereum || !isAdmin) return;
 
       try {
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -51,14 +55,14 @@ export function RewardAdmin() {
     fetchContractInfo();
     const interval = setInterval(fetchContractInfo, 10000);
     return () => clearInterval(interval);
-  }, [account]);
+  }, [account, isAdmin]);
 
   const approveTokens = async () => {
-    if (!account || !window.ethereum) {
+    if (!account || !window.ethereum || !isAdmin) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please connect your wallet first.",
+        description: "Only the admin wallet can approve tokens.",
       });
       return;
     }
@@ -95,7 +99,8 @@ export function RewardAdmin() {
     }
   };
 
-  if (!account) return null;
+  // Only render for admin wallet
+  if (!isAdmin) return null;
 
   const maxDistribution = Number(totalSupply) * 0.4;
   const currentDistributionPercentage = (Number(distributorBalance) / Number(totalSupply)) * 100;
