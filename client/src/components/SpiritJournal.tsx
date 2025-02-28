@@ -8,6 +8,7 @@ import { PlusCircle, Search, Loader2, Brain, Users, Clock } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
+import { TokenBalance } from './TokenBalance';
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
@@ -62,9 +63,11 @@ export default function SpiritJournal() {
         <div className="p-4">
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
+          <TokenBalance />
+
           <Button 
             onClick={() => navigate('/journal/new')}
-            className="w-full mb-8"
+            className="w-full mb-8 mt-4"
           >
             <PlusCircle className="w-4 h-4 mr-2" />
             New Entry
