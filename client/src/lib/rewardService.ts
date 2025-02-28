@@ -38,11 +38,6 @@ const REWARD_CRITERIA = {
       DAILY: { hours: 24, reward: ethers.parseUnits('0.3', 18) },    // +0.3 SPIRIT
       STREAK: { days: 7, reward: ethers.parseUnits('0.5', 18) }      // +0.5 SPIRIT for 7-day streak
     }
-  },
-  // Prevent spam/low quality content
-  PENALTIES: {
-    REPETITIVE_CONTENT: 0.5, // 50% reduction for similar content to previous entries
-    MAX_DAILY_ENTRIES: 3     // Maximum rewarded entries per day
   }
 };
 
@@ -71,11 +66,6 @@ export async function calculateEntryReward(
   }
 
   let reward = REWARD_CRITERIA.BASE_REWARD;
-
-  // Check for repetitive content
-  if (previousEntry && isRepetitiveContent(entry.content, previousEntry.content)) {
-    reward = reward * BigInt(Math.floor(REWARD_CRITERIA.PENALTIES.REPETITIVE_CONTENT * 100)) / 100n;
-  }
 
   // Content length bonuses
   if (contentLength >= REWARD_CRITERIA.QUALITY_THRESHOLDS.CONTENT_LENGTH.LONG.chars) {
@@ -112,7 +102,7 @@ export async function calculateEntryReward(
 export async function distributeReward(recipientAddress: string, amount: bigint) {
   if (!window.ethereum) {
     console.error('No ethereum provider found');
-    return false;
+    throw new Error('Please connect your wallet to receive rewards');
   }
 
   try {
@@ -140,8 +130,7 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     const distributedBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
 
     if (distributedBalance + amount > maxDistribution) {
-      console.error('Reward distribution would exceed maximum allowed percentage');
-      return false;
+      throw new Error('Maximum token distribution limit reached');
     }
 
     // Distribute reward
@@ -151,6 +140,13 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     return true;
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
-    return false;
+    // Check for specific errors and provide better user feedback
+    if (error.code === 'ACTION_REJECTED') {
+      throw new Error('Transaction was rejected. Please try again.');
+    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+      throw new Error('Contract has insufficient tokens for distribution.');
+    } else {
+      throw new Error('Failed to distribute tokens. Please try again later.');
+    }
   }
 }

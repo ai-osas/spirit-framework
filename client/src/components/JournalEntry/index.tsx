@@ -158,20 +158,21 @@ export default function JournalEntry({ id }: JournalEntryProps) {
 
           // Only attempt distribution if there's a reward to give
           if (rewardAmount > 0n) {
-            const success = await distributeReward(account, rewardAmount);
+            try {
+              await distributeReward(account, rewardAmount);
 
-            if (success) {
               toast({
                 title: "Reward Earned!",
                 description: `You've earned SPIRIT tokens for your journal entry! Rewards increase with longer entries, media attachments, and daily entries.`,
               });
 
               queryClient.invalidateQueries({ queryKey: ['token-balance'] });
-            } else {
+            } catch (distributionError: any) {
+              console.error('Failed to distribute reward:', distributionError);
               toast({
                 variant: "destructive",
-                title: "Reward Distribution Not Available",
-                description: "Token distribution has not been approved by admin yet. Your reward will be available once approved.",
+                title: "Reward Distribution Failed",
+                description: distributionError.message || "Failed to distribute SPIRIT tokens. Please try again later.",
               });
             }
           } else {
@@ -181,12 +182,11 @@ export default function JournalEntry({ id }: JournalEntryProps) {
             });
           }
         } catch (rewardError: any) {
-          console.error('Failed to distribute reward:', rewardError);
-          // Show error toast but don't block the save operation
+          console.error('Failed to calculate reward:', rewardError);
           toast({
             variant: "destructive",
-            title: "Reward Distribution Failed",
-            description: rewardError.message || "Failed to distribute SPIRIT tokens. Please try again later.",
+            title: "Reward Calculation Failed",
+            description: rewardError.message || "Failed to calculate SPIRIT tokens. Please try again later.",
           });
         }
       }
