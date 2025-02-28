@@ -9,6 +9,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
 import { TokenBalance } from './TokenBalance';
+import { RewardAdmin } from './RewardAdmin'; // Added import
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
@@ -64,6 +65,7 @@ export default function SpiritJournal() {
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
           <TokenBalance />
+          <RewardAdmin /> {/* Added RewardAdmin component */}
 
           <Button 
             onClick={() => navigate('/journal/new')}

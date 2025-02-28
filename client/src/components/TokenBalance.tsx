@@ -45,6 +45,11 @@ export function TokenBalance() {
     };
 
     fetchBalance();
+
+    // Set up balance refresh interval
+    const interval = setInterval(fetchBalance, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
   }, [account]);
 
   if (!account) return null;

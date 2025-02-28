@@ -24,6 +24,8 @@ import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { Editor } from './Editor';
 import { calculateEntryReward, distributeReward } from '@/lib/rewardService';
+import { toast } from '../../hooks/use-toast'; // Fixed import path
+
 
 interface JournalEntryProps {
   id?: string;
@@ -153,13 +155,32 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           const previousEntry = entries[entries.length - 1];
           const rewardAmount = await calculateEntryReward(entryData, previousEntry);
 
-          await distributeReward(account, rewardAmount);
+          const success = await distributeReward(account, rewardAmount);
 
-          // Invalidate token balance query to reflect new balance
-          queryClient.invalidateQueries({ queryKey: ['token-balance'] });
-        } catch (rewardError) {
+          if (success) {
+            // Show success toast
+            toast({
+              title: "Reward Distributed!",
+              description: `You've earned SPIRIT tokens for your journal entry! Check your balance.`,
+            });
+
+            // Invalidate token balance query to reflect new balance
+            queryClient.invalidateQueries({ queryKey: ['token-balance'] });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Reward Distribution Failed",
+              description: "Failed to distribute SPIRIT tokens. Please try again later.",
+            });
+          }
+        } catch (rewardError: any) {
           console.error('Failed to distribute reward:', rewardError);
-          // Don't block the save operation if reward distribution fails
+          // Show error toast but don't block the save operation
+          toast({
+            variant: "destructive",
+            title: "Reward Distribution Failed",
+            description: rewardError.message || "Failed to distribute SPIRIT tokens. Please try again later.",
+          });
         }
       }
     } catch (error) {
@@ -230,6 +251,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           </div>
         </div>
         
+
         <div className="flex-1 overflow-y-auto">
           <button 
             onClick={() => {
