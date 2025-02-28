@@ -5,6 +5,13 @@ const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac'
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
+// Network configuration
+const ELECTRONEUM_TESTNET = {
+  chainId: 5201420,
+  name: 'Electroneum Testnet',
+  rpcUrl: 'https://rpc.ankr.com/electroneum_testnet'
+};
+
 // ABI for reward distribution contract
 const REWARD_DISTRIBUTION_ABI = [
   {
@@ -46,10 +53,10 @@ export async function calculateEntryReward(
 ): Promise<bigint> {
   // Basic content length check
   const contentLength = entry.content.trim().length;
-  console.log('Content length:', contentLength); // Debug log
+  console.log('Content length:', contentLength);
 
   if (contentLength < REWARD_CRITERIA.MIN_CONTENT_LENGTH) {
-    console.log('Content too short'); // Debug log
+    console.log('Content too short');
     return 0n;
   }
 
@@ -97,6 +104,30 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     console.log('Starting reward distribution...');
     console.log('Recipient:', recipientAddress);
     console.log('Amount:', amount.toString());
+
+    // Request network switch if needed
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${ELECTRONEUM_TESTNET.chainId.toString(16)}` }],
+      });
+    } catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: `0x${ELECTRONEUM_TESTNET.chainId.toString(16)}`,
+              chainName: ELECTRONEUM_TESTNET.name,
+              rpcUrls: [ELECTRONEUM_TESTNET.rpcUrl]
+            },
+          ],
+        });
+      } else {
+        throw switchError;
+      }
+    }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
@@ -155,9 +186,11 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     } else if (error.code === 'INSUFFICIENT_FUNDS') {
       throw new Error('Contract has insufficient tokens for distribution.');
     } else if (error.code === 'CALL_EXCEPTION') {
-      throw new Error('Contract call failed. The contract may not have permission to distribute tokens.');
+      throw new Error('Failed to connect to Electroneum network. Please make sure your wallet is connected to Electroneum testnet.');
+    } else if (error.code === 'NETWORK_ERROR') {
+      throw new Error('Network error. Please make sure you are connected to Electroneum testnet.');
     } else {
-      throw new Error('Failed to distribute tokens. Please check the contract permissions and try again.');
+      throw new Error('Failed to distribute tokens. Please make sure you are connected to Electroneum testnet and try again.');
     }
   }
 }
