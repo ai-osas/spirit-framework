@@ -1,21 +1,20 @@
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
 import { type JournalEntry } from '@shared/schema';
 import { Card, CardContent } from '@/components/ui/card';
-import { useLocation } from 'wouter';
 import { analyzeLearningPatterns } from '@/lib/openai';
 
 export default function ExplorePatternPage() {
   const { id } = useParams();
   const [_, navigate] = useLocation();
-  
+
   const { data: entries = [] } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries'],
   });
 
-  const { data: patterns = [] } = useQuery({
+  const { data: patterns = [], isLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
     queryFn: async () => {
       const entryData = entries.map(entry => ({
@@ -39,6 +38,14 @@ export default function ExplorePatternPage() {
             Return to Journal
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="grid place-items-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
   }
