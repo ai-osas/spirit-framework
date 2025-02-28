@@ -107,9 +107,28 @@ export default function JournalEntry({ id }: JournalEntryProps) {
 
     if (!account) {
       setSaveError('Please connect your wallet before saving');
+      // Try to reconnect if we have a window.ethereum instance
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ 
+            method: 'eth_requestAccounts' 
+          });
+          if (accounts[0]) {
+            // Continue with save after reconnecting
+            await handleSave(accounts[0]);
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to reconnect wallet:', err);
+        }
+      }
       return;
     }
 
+    await handleSave(account);
+  };
+
+  const handleSave = async (walletAddress: string) => {
     try {
       setIsSaving(true);
       setSaveError(null);
@@ -117,7 +136,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       const entryData = {
         title,
         content,
-        wallet_address: account,
+        wallet_address: walletAddress,
         media: media.map(m => ({
           id: m.id,
           file_type: m.type,
