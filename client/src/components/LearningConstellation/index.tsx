@@ -1,36 +1,66 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { type JournalEntry } from '@shared/schema';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
+import { analyzeLearningPatterns } from '@/lib/openai';
 
 interface Props {
   entries: JournalEntry[];
 }
 
 export function LearningConstellation({ entries }: Props) {
-  // Extract patterns from entries
-  const patterns = React.useMemo(() => {
-    return entries.slice(-4).map((entry, index) => ({
-      id: index + 1,
-      title: entry.title,
-      description: entry.content.slice(0, 100) + '...',
-      relatedConcepts: Math.floor(Math.random() * 3) + 2,
-      timeAgo: index === 0 ? '5 min ago' : '2d ago'
-    }));
-  }, [entries]);
+  // Use React Query for caching the AI analysis
+  const { data: patterns = [], isLoading } = useQuery({
+    queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
+    queryFn: async () => {
+      const entryData = entries.map(entry => ({
+        title: entry.title,
+        content: entry.content
+      }));
+      return analyzeLearningPatterns(entryData);
+    },
+    enabled: entries.length > 0,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid place-items-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <p className="text-gray-600">Analyzing your learning patterns...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (patterns.length === 0) {
+    return (
+      <div className="grid place-items-center h-96">
+        <div className="text-center max-w-md">
+          <h3 className="text-lg font-semibold mb-2">No Learning Patterns Yet</h3>
+          <p className="text-gray-600">
+            Start writing about what you're learning, and we'll help you identify patterns
+            and connections in your knowledge journey.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 gap-6">
-      {patterns.map((pattern) => (
-        <Card key={pattern.id} className="p-6">
+      {patterns.map((pattern, index) => (
+        <Card key={index} className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">
-                {pattern.timeAgo}
+                Confidence: {Math.round(pattern.confidence * 100)}%
               </span>
             </div>
-            <span className="text-sm">Learning Pattern {pattern.id}</span>
+            <span className="text-sm font-medium">{pattern.topic}</span>
           </div>
 
           <p className="text-gray-600 mb-4">
@@ -39,15 +69,20 @@ export function LearningConstellation({ entries }: Props) {
 
           <div className="flex items-center gap-2 mb-4">
             <div className="flex -space-x-2">
-              {Array.from({ length: pattern.relatedConcepts }).map((_, i) => (
+              {pattern.relatedConcepts.slice(0, 4).map((concept, i) => (
                 <div
                   key={i}
-                  className="w-6 h-6 rounded-full bg-gray-200"
-                />
+                  className="w-6 h-6 rounded-full bg-blue-100 border border-white grid place-items-center"
+                  title={concept}
+                >
+                  <span className="text-xs text-blue-700">
+                    {concept.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               ))}
             </div>
             <span className="text-sm text-gray-500">
-              {pattern.relatedConcepts} related concepts
+              {pattern.relatedConcepts.length} related concepts
             </span>
           </div>
 
