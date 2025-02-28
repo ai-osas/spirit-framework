@@ -71,7 +71,6 @@ export async function calculateEntryReward(
 export async function distributeReward(recipientAddress: string, amount: bigint) {
   if (!window.ethereum) {
     console.error('No ethereum provider found');
-    // useToast({ type: 'error', message: 'No ethereum provider found' }); // replace with actual toast call
     return false;
   }
 
@@ -79,20 +78,27 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
-    // Create contract instance
+    // First check if the distribution contract has allowance
+    const tokenContract = new ethers.Contract(
+      SPIRIT_TOKEN_ADDRESS,
+      ['function allowance(address owner, address spender) view returns (uint256)'],
+      provider
+    );
+
+    const allowance = await tokenContract.allowance(SPIRIT_TOKEN_ADDRESS, REWARD_DISTRIBUTION_ADDRESS);
+    if (allowance === 0n) {
+      console.error('RewardDistribution contract not approved for token distribution');
+      return false;
+    }
+
+    // Create reward contract instance
     const rewardContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS,
       REWARD_DISTRIBUTION_ABI,
       signer
     );
 
-    // Check total supply to ensure we don't exceed max distribution
-    const tokenContract = new ethers.Contract(
-      SPIRIT_TOKEN_ADDRESS,
-      ['function totalSupply() view returns (uint256)'],
-      provider
-    );
-
+    // Get total supply to check distribution limit
     const totalSupply = await tokenContract.totalSupply();
     const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / 100n;
 
@@ -101,7 +107,6 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
 
     if (distributedBalance + amount > maxDistribution) {
       console.error('Reward distribution would exceed maximum allowed percentage');
-      // useToast({ type: 'error', message: 'Reward distribution would exceed maximum allowed percentage' }); // replace with actual toast call
       return false;
     }
 
@@ -109,11 +114,9 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     const tx = await rewardContract.distributeReward(recipientAddress, amount);
     await tx.wait();
     console.log('Reward distributed successfully!');
-    // useToast({ type: 'success', message: 'Reward distributed successfully!' }); // replace with actual toast call
     return true;
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
-    // useToast({ type: 'error', message: `Failed to distribute reward: ${error.message}` }); // replace with actual toast call
     return false;
   }
 }

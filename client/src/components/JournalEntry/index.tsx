@@ -172,8 +172,8 @@ export default function JournalEntry({ id }: JournalEntryProps) {
             } else {
               toast({
                 variant: "destructive",
-                title: "Reward Distribution Failed",
-                description: "Failed to distribute SPIRIT tokens. Please try again later.",
+                title: "Reward Distribution Not Available",
+                description: "Token distribution has not been approved by admin yet. Your reward will be available once approved.",
               });
             }
           } else {
