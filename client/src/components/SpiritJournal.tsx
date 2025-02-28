@@ -7,18 +7,16 @@ import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, Loader2 } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
-import { LearningConstellation } from './LearningConstellation';
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [view, setView] = useState<'entries' | 'constellation'>('entries');
   const { account, connect, isConnecting } = useWallet();
 
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries'],
     enabled: !!account,
-    staleTime: 0 // Always fetch fresh data
+    staleTime: 0
   });
 
   const filteredEntries = entries.filter(entry =>
@@ -61,77 +59,52 @@ export default function SpiritJournal() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Your Learning Journey</h1>
-          <p className="text-gray-600">
-            Track your growth and discover patterns in your learning
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button
-            variant={view === 'entries' ? 'default' : 'outline'}
-            onClick={() => setView('entries')}
-          >
-            Journal Entries
-          </Button>
-          <Button
-            variant={view === 'constellation' ? 'default' : 'outline'}
-            onClick={() => setView('constellation')}
-          >
-            Learning Constellation
-          </Button>
-          <Button onClick={() => navigate('/journal/new')}>
-            <PlusCircle className="w-4 h-4 mr-2" />
-            New Entry
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold">Your Journal</h1>
+        <Button onClick={() => navigate('/journal/new')}>
+          <PlusCircle className="w-4 h-4 mr-2" />
+          New Entry
+        </Button>
       </div>
 
-      {view === 'entries' ? (
-        <>
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Search entries..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Input
+          type="text"
+          placeholder="Search entries..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
-          <div className="grid gap-4">
-            {filteredEntries.map((entry) => (
-              <Card 
-                key={entry.id}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => navigate(`/journal/${entry.id}`)}
-              >
-                <CardContent className="p-4">
-                  <h2 className="text-xl font-semibold mb-2">{entry.title}</h2>
-                  <p className="text-gray-600 line-clamp-2">{entry.content}</p>
-                  <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                    <span>{new Date(entry.created_at).toLocaleDateString()}</span>
-                    {entry.media?.length ? (
-                      <span>{entry.media.length} media files</span>
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {filteredEntries.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                No entries found
+      <div className="grid gap-4">
+        {filteredEntries.map((entry) => (
+          <Card 
+            key={entry.id}
+            className="hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={() => navigate(`/journal/${entry.id}`)}
+          >
+            <CardContent className="p-4">
+              <h2 className="text-xl font-semibold mb-2">{entry.title}</h2>
+              <p className="text-gray-600 line-clamp-2">{entry.content}</p>
+              <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
+                <span>{new Date(entry.created_at).toLocaleDateString()}</span>
+                {entry.media?.length ? (
+                  <span>{entry.media.length} media files</span>
+                ) : null}
               </div>
-            )}
+            </CardContent>
+          </Card>
+        ))}
+
+        {filteredEntries.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            No entries found
           </div>
-        </>
-      ) : (
-        <LearningConstellation entries={entries} />
-      )}
+        )}
+      </div>
     </div>
   );
 }
