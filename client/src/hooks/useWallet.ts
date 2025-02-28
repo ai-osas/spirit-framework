@@ -17,6 +17,24 @@ export function useWallet() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Check if wallet is already connected on mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+          }
+        } catch (err) {
+          console.error('Failed to check wallet connection:', err);
+        }
+      }
+    };
+
+    checkConnection();
+  }, []);
+
   useEffect(() => {
     if (window.ethereum) {
       const handleAccountsChanged = (accounts: string[]) => {
@@ -32,7 +50,9 @@ export function useWallet() {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
 
       return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        if (window.ethereum) {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        }
       };
     }
   }, [toast]);

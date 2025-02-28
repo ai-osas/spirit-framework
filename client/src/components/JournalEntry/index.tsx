@@ -105,6 +105,21 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       return;
     }
 
+    // Double check wallet connection
+    if (!account && window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length === 0) {
+          setSaveError('Please connect your wallet before saving');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to check wallet connection:', err);
+        setSaveError('Please connect your wallet before saving');
+        return;
+      }
+    }
+
     if (!account) {
       setSaveError('Please connect your wallet before saving');
       return;
@@ -130,9 +145,6 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       } else {
         await createEntryMutation.mutateAsync(entryData);
       }
-
-      // Only navigate after successful save
-      navigate('/journal');
     } catch (error) {
       console.error('Failed to save entry:', error);
       setSaveError('Failed to save entry. Please try again.');
