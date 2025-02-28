@@ -23,6 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { Editor } from './Editor';
+import { calculateEntryReward, distributeReward } from '@/lib/rewardService';
 
 interface JournalEntryProps {
   id?: string;
@@ -145,6 +146,21 @@ export default function JournalEntry({ id }: JournalEntryProps) {
         await updateEntryMutation.mutateAsync({ id, data: entryData });
       } else {
         await createEntryMutation.mutateAsync(entryData);
+
+        // Calculate and distribute reward for new entries
+        try {
+          // Get the latest entry before this one
+          const previousEntry = entries[entries.length - 1];
+          const rewardAmount = await calculateEntryReward(entryData, previousEntry);
+
+          await distributeReward(account, rewardAmount);
+
+          // Invalidate token balance query to reflect new balance
+          queryClient.invalidateQueries({ queryKey: ['token-balance'] });
+        } catch (rewardError) {
+          console.error('Failed to distribute reward:', rewardError);
+          // Don't block the save operation if reward distribution fails
+        }
       }
     } catch (error) {
       console.error('Failed to save entry:', error);

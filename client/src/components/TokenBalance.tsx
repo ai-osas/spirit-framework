@@ -63,6 +63,9 @@ export function TokenBalance() {
               </p>
             )}
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Earn SPIRIT tokens by consistently journaling and adding rich content!
+          </p>
         </div>
       </div>
     </Card>
