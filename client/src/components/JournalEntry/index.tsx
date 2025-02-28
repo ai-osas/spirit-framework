@@ -22,6 +22,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
+import { Editor } from './Editor';
 
 interface JournalEntryProps {
   id?: string;
@@ -314,7 +315,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-4xl font-medium mb-6 bg-transparent focus:outline-none placeholder-gray-300"
             />
-            
+
             {/* Media Grid */}
             <AnimatePresence>
               {media.length > 0 && (
@@ -337,12 +338,9 @@ export default function JournalEntry({ id }: JournalEntryProps) {
               )}
             </AnimatePresence>
 
-            <textarea
-              ref={contentRef}
-              placeholder="Start writing..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full flex-1 resize-none bg-transparent focus:outline-none text-lg placeholder-gray-300 min-h-[calc(100vh-300px)]"
+            <Editor
+              content={content}
+              onChange={setContent}
             />
           </div>
         </div>
