@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
 import { type JournalEntry } from '@shared/schema';
-import { useToast } from '@/hooks/use-toast';
 
 const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
@@ -40,17 +39,6 @@ const REWARD_CRITERIA = {
     }
   }
 };
-
-function isRepetitiveContent(content: string, previousContent?: string): boolean {
-  if (!previousContent) return false;
-
-  // Simple repetition check - can be enhanced with more sophisticated algorithms
-  const contentWords = new Set(content.toLowerCase().split(/\s+/));
-  const previousWords = new Set(previousContent.toLowerCase().split(/\s+/));
-
-  const commonWords = new Set([...contentWords].filter(x => previousWords.has(x)));
-  return commonWords.size / contentWords.size > 0.8; // If 80% words are same, consider repetitive
-}
 
 export async function calculateEntryReward(
   entry: JournalEntry, 
@@ -106,8 +94,13 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
   }
 
   try {
+    console.log('Starting reward distribution...');
+    console.log('Recipient:', recipientAddress);
+    console.log('Amount:', amount.toString());
+
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
+    console.log('Got signer, connected address:', await signer.getAddress());
 
     // Create reward contract instance
     const rewardContract = new ethers.Contract(
@@ -115,6 +108,7 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       REWARD_DISTRIBUTION_ABI,
       signer
     );
+    console.log('Created reward contract instance');
 
     // Get total supply to check distribution limit
     const tokenContract = new ethers.Contract(
@@ -123,30 +117,47 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       provider
     );
 
-    const totalSupply = await tokenContract.totalSupply();
-    const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / 100n;
+    const [totalSupply, distributedBalance] = await Promise.all([
+      tokenContract.totalSupply(),
+      tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS)
+    ]);
+    console.log('Total supply:', totalSupply.toString());
+    console.log('Distributed balance:', distributedBalance.toString());
 
-    // Get current distributed amount
-    const distributedBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
+    const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / 100n;
+    console.log('Max distribution:', maxDistribution.toString());
 
     if (distributedBalance + amount > maxDistribution) {
       throw new Error('Maximum token distribution limit reached');
     }
 
     // Distribute reward
+    console.log('Calling distributeReward...');
     const tx = await rewardContract.distributeReward(recipientAddress, amount);
-    await tx.wait();
-    console.log('Reward distributed successfully!');
+    console.log('Transaction sent:', tx.hash);
+
+    const receipt = await tx.wait();
+    console.log('Transaction confirmed:', receipt);
+
     return true;
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
+
+    // Log detailed error information
+    if (error.code) console.error('Error code:', error.code);
+    if (error.message) console.error('Error message:', error.message);
+    if (error.data) console.error('Error data:', error.data);
+    if (error.transaction) console.error('Failed transaction:', error.transaction);
+
     // Check for specific errors and provide better user feedback
     if (error.code === 'ACTION_REJECTED') {
       throw new Error('Transaction was rejected. Please try again.');
     } else if (error.code === 'INSUFFICIENT_FUNDS') {
       throw new Error('Contract has insufficient tokens for distribution.');
+    } else if (error.code === 'CALL_EXCEPTION') {
+      throw new Error('Contract call failed. The contract may not have permission to distribute tokens.');
     } else {
-      throw new Error('Failed to distribute tokens. Please try again later.');
+      throw new Error('Failed to distribute tokens. Please check the contract permissions and try again.');
     }
   }
 }
