@@ -4,9 +4,10 @@ import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Brain, Users, Clock } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
+import { LearningConstellation } from './LearningConstellation';
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
@@ -18,10 +19,6 @@ export default function SpiritJournal() {
     enabled: !!account,
     staleTime: 0
   });
-
-  const filteredEntries = entries.filter(entry =>
-    entry.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (!account) {
     return (
@@ -59,51 +56,66 @@ export default function SpiritJournal() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Your Journal</h1>
-        <Button onClick={() => navigate('/journal/new')}>
-          <PlusCircle className="w-4 h-4 mr-2" />
-          New Entry
-        </Button>
-      </div>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="w-64 border-r bg-white">
+        <div className="p-4">
+          <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <Input
-          type="text"
-          placeholder="Search entries..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      <div className="grid gap-4">
-        {filteredEntries.map((entry) => (
-          <Card 
-            key={entry.id}
-            className="hover:bg-gray-50 transition-colors cursor-pointer"
-            onClick={() => navigate(`/journal/${entry.id}`)}
+          <Button 
+            onClick={() => navigate('/journal/new')}
+            className="w-full mb-8"
           >
-            <CardContent className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{entry.title}</h2>
-              <p className="text-gray-600 line-clamp-2">{entry.content}</p>
-              <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                <span>{new Date(entry.created_at).toLocaleDateString()}</span>
-                {entry.media?.length ? (
-                  <span>{entry.media.length} media files</span>
-                ) : null}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+            <PlusCircle className="w-4 h-4 mr-2" />
+            New Entry
+          </Button>
 
-        {filteredEntries.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No entries found
+          <div className="space-y-1">
+            <h2 className="text-sm font-medium mb-2 text-gray-500">YOUR PATTERNS</h2>
+            <Button
+              variant="ghost"
+              className="w-full justify-start bg-blue-50"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Recent Insights
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Learning Paths
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Shared Patterns
+            </Button>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-5xl mx-auto px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Your Learning Constellation</h1>
+            <p className="text-gray-600">Mapping your journey of understanding</p>
+          </div>
+
+          <div className="flex gap-4 mb-8">
+            <Button variant="outline">
+              Filter
+            </Button>
+            <Button variant="outline">
+              Timeline
+            </Button>
+          </div>
+
+          <LearningConstellation entries={entries} />
+        </div>
       </div>
     </div>
   );
