@@ -15,7 +15,8 @@ export default function SpiritJournal() {
 
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries'],
-    enabled: !!account
+    enabled: !!account,
+    staleTime: 0 // Always fetch fresh data
   });
 
   const filteredEntries = entries.filter(entry =>
