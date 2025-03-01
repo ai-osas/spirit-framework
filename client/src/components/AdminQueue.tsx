@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ethers } from 'ethers';
 import { calculateEntryReward, distributeReward } from '@/lib/rewardService';
 
 export function AdminQueue() {
@@ -50,7 +51,7 @@ export function AdminQueue() {
 
       // Calculate reward amount
       const rewardAmount = await calculateEntryReward(entry);
-      
+
       if (rewardAmount <= 0) {
         throw new Error('Invalid reward amount calculated');
       }
