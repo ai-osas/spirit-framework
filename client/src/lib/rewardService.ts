@@ -32,7 +32,7 @@ const REWARD_DISTRIBUTION_ABI = [
   }
 ];
 
-// Reward criteria configuration
+// Reward criteria configuration remains the same
 const REWARD_CRITERIA = {
   BASE_REWARD: ethers.parseUnits('0.5', 18),
   MIN_CONTENT_LENGTH: 200,
@@ -109,6 +109,19 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     console.log('Recipient:', recipientAddress);
     console.log('Amount:', amount.toString());
 
+    // Check contract balance first before network switch
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const tokenContract = new ethers.Contract(
+      SPIRIT_TOKEN_ADDRESS,
+      ['function balanceOf(address) view returns (uint256)'],
+      provider
+    );
+
+    const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
+    if (contractBalance < amount) {
+      throw new Error('The reward contract is currently out of SPIRIT tokens. Please try again later or contact the administrators.');
+    }
+
     // Request network switch to Electroneum Testnet
     try {
       await window.ethereum.request({
@@ -132,33 +145,15 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       throw new Error('Please switch to Electroneum testnet to receive rewards');
     }
 
-    const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     console.log('Connected address:', await signer.getAddress());
 
-    // Create contract instances
+    // Create contract instance
     const rewardContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS,
       REWARD_DISTRIBUTION_ABI,
       signer
     );
-
-    const tokenContract = new ethers.Contract(
-      SPIRIT_TOKEN_ADDRESS,
-      ['function totalSupply() view returns (uint256)', 'function balanceOf(address) view returns (uint256)'],
-      provider
-    );
-
-    // Check distribution limits
-    const [totalSupply, distributedBalance] = await Promise.all([
-      tokenContract.totalSupply(),
-      tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS)
-    ]);
-
-    const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / BigInt(100);
-    if (distributedBalance + amount > maxDistribution) {
-      throw new Error('Maximum token distribution limit reached');
-    }
 
     // Distribute reward
     console.log('Distributing reward...');
@@ -172,11 +167,13 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 
-    // Enhanced error handling for testnet-specific cases
+    // Enhanced error handling with specific messages
     if (error.code === 4001) {
       throw new Error('Transaction was rejected by user');
     } else if (error.code === -32000) {
       throw new Error('Insufficient ETN for transaction. Visit https://faucet.electroneum.com/ to get testnet ETN');
+    } else if (error.message.includes('insufficient contract balance')) {
+      throw new Error('The reward contract is currently out of SPIRIT tokens. Please try again later or contact the administrators.');
     } else if (error.data?.message?.includes('execution reverted')) {
       throw new Error('Smart contract execution failed. Please verify contract status on testnet explorer');
     } else if (error.message.includes('network')) {
