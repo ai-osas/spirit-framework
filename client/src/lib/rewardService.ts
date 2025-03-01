@@ -5,10 +5,16 @@ const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac'
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
-// Network configuration
-const ELECTRONEUM_TESTNET = {
+// Updated network configuration for Electroneum Mainnet
+const ELECTRONEUM_NETWORK = {
   chainId: 5201420,
-  name: 'Electroneum Testnet'
+  name: 'Electroneum Mainnet',
+  rpcUrls: ['https://mainnet.electroneum.com'],
+  nativeCurrency: {
+    name: 'Electroneum',
+    symbol: 'ETN',
+    decimals: 18
+  }
 };
 
 // ABI for reward distribution contract
@@ -25,23 +31,23 @@ const REWARD_DISTRIBUTION_ABI = [
   }
 ];
 
-// Scoring criteria for journal entries
+// Rest of the reward criteria remain unchanged
 const REWARD_CRITERIA = {
-  BASE_REWARD: ethers.parseUnits('0.5', 18), // 0.5 SPIRIT tokens base reward
-  MIN_CONTENT_LENGTH: 200, // Minimum characters for any reward
+  BASE_REWARD: ethers.parseUnits('0.5', 18),
+  MIN_CONTENT_LENGTH: 200,
   QUALITY_THRESHOLDS: {
     CONTENT_LENGTH: {
-      MEDIUM: { chars: 500, reward: ethers.parseUnits('0.3', 18) }, // +0.3 SPIRIT
-      LONG: { chars: 1000, reward: ethers.parseUnits('0.5', 18) }   // +0.5 SPIRIT
+      MEDIUM: { chars: 500, reward: ethers.parseUnits('0.3', 18) },
+      LONG: { chars: 1000, reward: ethers.parseUnits('0.5', 18) }
     },
     MEDIA_BONUS: {
-      IMAGE: ethers.parseUnits('0.2', 18), // +0.2 SPIRIT per image
-      AUDIO: ethers.parseUnits('0.3', 18), // +0.3 SPIRIT per audio
-      MAX_MEDIA: 3 // Maximum number of media items that count for rewards
+      IMAGE: ethers.parseUnits('0.2', 18),
+      AUDIO: ethers.parseUnits('0.3', 18),
+      MAX_MEDIA: 3
     },
     CONSISTENCY: {
-      DAILY: { hours: 24, reward: ethers.parseUnits('0.3', 18) },    // +0.3 SPIRIT
-      STREAK: { days: 7, reward: ethers.parseUnits('0.5', 18) }      // +0.5 SPIRIT for 7-day streak
+      DAILY: { hours: 24, reward: ethers.parseUnits('0.3', 18) },
+      STREAK: { days: 7, reward: ethers.parseUnits('0.5', 18) }
     }
   }
 };
@@ -56,7 +62,7 @@ export async function calculateEntryReward(
 
   if (contentLength < REWARD_CRITERIA.MIN_CONTENT_LENGTH) {
     console.log('Content too short');
-    return 0n;
+    return BigInt(0);
   }
 
   let reward = REWARD_CRITERIA.BASE_REWARD;
@@ -95,8 +101,7 @@ export async function calculateEntryReward(
 
 export async function distributeReward(recipientAddress: string, amount: bigint) {
   if (!window.ethereum) {
-    console.error('No ethereum provider found');
-    throw new Error('Please connect your wallet to receive rewards');
+    throw new Error('Please install a Web3 wallet to receive rewards');
   }
 
   try {
@@ -104,47 +109,53 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     console.log('Recipient:', recipientAddress);
     console.log('Amount:', amount.toString());
 
-    // Check if we're on the correct network
+    // Request network switch to Electroneum
+    try {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [ELECTRONEUM_NETWORK]
+      });
+    } catch (switchError: any) {
+      console.error('Failed to add/switch to Electroneum network:', switchError);
+      throw new Error('Please add and switch to the Electroneum network in your wallet');
+    }
+
+    // Verify correct network
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if (parseInt(chainId, 16) !== ELECTRONEUM_TESTNET.chainId) {
-      throw new Error(`Please switch to ${ELECTRONEUM_TESTNET.name} to receive rewards`);
+    if (parseInt(chainId, 16) !== ELECTRONEUM_NETWORK.chainId) {
+      throw new Error('Please switch to Electroneum network to receive rewards');
     }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
-    console.log('Got signer, connected address:', await signer.getAddress());
+    console.log('Connected address:', await signer.getAddress());
 
-    // Create reward contract instance
+    // Create contract instances
     const rewardContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS,
       REWARD_DISTRIBUTION_ABI,
       signer
     );
-    console.log('Created reward contract instance');
 
-    // Check distribution limit
     const tokenContract = new ethers.Contract(
       SPIRIT_TOKEN_ADDRESS,
       ['function totalSupply() view returns (uint256)', 'function balanceOf(address) view returns (uint256)'],
       provider
     );
 
+    // Check distribution limits
     const [totalSupply, distributedBalance] = await Promise.all([
       tokenContract.totalSupply(),
       tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS)
     ]);
-    console.log('Total supply:', totalSupply.toString());
-    console.log('Distributed balance:', distributedBalance.toString());
 
-    const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / 100n;
-    console.log('Max distribution:', maxDistribution.toString());
-
+    const maxDistribution = (totalSupply * BigInt(MAX_DISTRIBUTION_PERCENTAGE)) / BigInt(100);
     if (distributedBalance + amount > maxDistribution) {
       throw new Error('Maximum token distribution limit reached');
     }
 
     // Distribute reward
-    console.log('Calling distributeReward...');
+    console.log('Distributing reward...');
     const tx = await rewardContract.distributeReward(recipientAddress, amount);
     console.log('Transaction sent:', tx.hash);
 
@@ -155,21 +166,16 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 
-    // Log detailed error information
-    if (error.code) console.error('Error code:', error.code);
-    if (error.message) console.error('Error message:', error.message);
-    if (error.data) console.error('Error data:', error.data);
-    if (error.transaction) console.error('Failed transaction:', error.transaction);
-
-    // Check for specific errors and provide better user feedback
-    if (error.code === 'ACTION_REJECTED') {
-      throw new Error('Transaction was rejected. Please try again.');
-    } else if (error.code === 'INSUFFICIENT_FUNDS') {
-      throw new Error('Contract has insufficient tokens for distribution.');
-    } else if (error.code === 'CALL_EXCEPTION') {
-      throw new Error('Contract interaction failed. Please ensure you are connected to Electroneum testnet.');
+    if (error.code === 4001) {
+      throw new Error('Transaction was rejected by user');
+    } else if (error.code === -32000) {
+      throw new Error('Insufficient ETN for transaction');
+    } else if (error.data?.message?.includes('execution reverted')) {
+      throw new Error('Smart contract execution failed. Please verify contract status on Electroneum explorer');
+    } else if (error.message.includes('network')) {
+      throw new Error('Please ensure you are connected to Electroneum network and try again');
     } else {
-      throw new Error(error.message || 'Failed to distribute tokens. Please try again later.');
+      throw new Error(error.message || 'Failed to distribute tokens. Please try again later');
     }
   }
 }
