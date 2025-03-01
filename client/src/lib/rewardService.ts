@@ -5,16 +5,17 @@ const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac'
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
-// Updated network configuration for Electroneum Mainnet
+// Updated network configuration for Electroneum Testnet
 const ELECTRONEUM_NETWORK = {
   chainId: 5201420,
-  name: 'Electroneum Mainnet',
-  rpcUrls: ['https://mainnet.electroneum.com'],
+  name: 'Electroneum Testnet',
+  rpcUrls: ['https://rpc.ankr.com/electroneum_testnet'],
   nativeCurrency: {
     name: 'Electroneum',
     symbol: 'ETN',
     decimals: 18
-  }
+  },
+  blockExplorerUrls: ['https://testnet-blockexplorer.electroneum.com/']
 };
 
 // ABI for reward distribution contract
@@ -31,7 +32,7 @@ const REWARD_DISTRIBUTION_ABI = [
   }
 ];
 
-// Rest of the reward criteria remain unchanged
+// Reward criteria configuration
 const REWARD_CRITERIA = {
   BASE_REWARD: ethers.parseUnits('0.5', 18),
   MIN_CONTENT_LENGTH: 200,
@@ -56,7 +57,6 @@ export async function calculateEntryReward(
   entry: JournalEntry, 
   previousEntry?: JournalEntry
 ): Promise<bigint> {
-  // Basic content length check
   const contentLength = entry.content.trim().length;
   console.log('Content length:', contentLength);
 
@@ -109,21 +109,27 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     console.log('Recipient:', recipientAddress);
     console.log('Amount:', amount.toString());
 
-    // Request network switch to Electroneum
+    // Request network switch to Electroneum Testnet
     try {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
-        params: [ELECTRONEUM_NETWORK]
+        params: [{
+          chainId: `0x${ELECTRONEUM_NETWORK.chainId.toString(16)}`,
+          chainName: ELECTRONEUM_NETWORK.name,
+          nativeCurrency: ELECTRONEUM_NETWORK.nativeCurrency,
+          rpcUrls: ELECTRONEUM_NETWORK.rpcUrls,
+          blockExplorerUrls: ELECTRONEUM_NETWORK.blockExplorerUrls
+        }]
       });
     } catch (switchError: any) {
-      console.error('Failed to add/switch to Electroneum network:', switchError);
-      throw new Error('Please add and switch to the Electroneum network in your wallet');
+      console.error('Failed to add/switch to Electroneum testnet:', switchError);
+      throw new Error('Please add and switch to the Electroneum testnet in your wallet');
     }
 
     // Verify correct network
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
     if (parseInt(chainId, 16) !== ELECTRONEUM_NETWORK.chainId) {
-      throw new Error('Please switch to Electroneum network to receive rewards');
+      throw new Error('Please switch to Electroneum testnet to receive rewards');
     }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -166,14 +172,15 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 
+    // Enhanced error handling for testnet-specific cases
     if (error.code === 4001) {
       throw new Error('Transaction was rejected by user');
     } else if (error.code === -32000) {
-      throw new Error('Insufficient ETN for transaction');
+      throw new Error('Insufficient ETN for transaction. Visit https://faucet.electroneum.com/ to get testnet ETN');
     } else if (error.data?.message?.includes('execution reverted')) {
-      throw new Error('Smart contract execution failed. Please verify contract status on Electroneum explorer');
+      throw new Error('Smart contract execution failed. Please verify contract status on testnet explorer');
     } else if (error.message.includes('network')) {
-      throw new Error('Please ensure you are connected to Electroneum network and try again');
+      throw new Error('Please ensure you are connected to Electroneum testnet and try again');
     } else {
       throw new Error(error.message || 'Failed to distribute tokens. Please try again later');
     }
