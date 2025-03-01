@@ -16,13 +16,22 @@ export default function HomePage() {
             </Link>
           </div>
           <nav className="flex items-center space-x-6">
+            <Link href="/">
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Home</span>
+            </Link>
+            <Link href="/documentation">
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Documentation</span>
+            </Link>
             <Link href="/community">
               <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Community</span>
             </Link>
-            <Link href="/journal/about">
+            <Link href="/blog">
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
+            </Link>
+            <Link href="/journal">
               <Button variant="outline">Sign in</Button>
             </Link>
-            <Link href="/journal/about">
+            <Link href="/journal">
               <Button>Sign up</Button>
             </Link>
           </nav>
@@ -39,11 +48,15 @@ export default function HomePage() {
             Mapping the constellations between code, stories, and human potential
           </p>
           <div className="flex justify-center gap-4">
-            <Button className="gap-2">Get Started</Button>
-            <Button variant="outline" className="gap-2">
-              <Github className="w-5 h-5" />
-              View on GitHub
-            </Button>
+            <Link href="/journal">
+              <Button className="gap-2">Get Started</Button>
+            </Link>
+            <a href="https://github.com/spirit-framework" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="gap-2">
+                <Github className="w-5 h-5" />
+                View on GitHub
+              </Button>
+            </a>
           </div>
         </div>
       </div>
@@ -101,8 +114,8 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 Personal learning pattern journal
               </p>
-              <Link href="/journal/about">
-                <Button variant="outline" className="w-full">Try Beta</Button>
+              <Link href="/journal">
+                <Button variant="outline" className="w-full">Learn More</Button>
               </Link>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -119,7 +132,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 Adaptive study companion
               </p>
-              <Button variant="outline" className="w-full" disabled>Coming Soon</Button>
+              <Button variant="outline" className="w-full" disabled>Learn More</Button>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-center mb-4">
@@ -135,7 +148,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 VS Code learning extension
               </p>
-              <Button variant="outline" className="w-full" disabled>Coming Soon</Button>
+              <Button variant="outline" className="w-full" disabled>Learn More</Button>
             </div>
           </div>
         </div>
