@@ -12,23 +12,21 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/">
-              <a>
-                <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto" />
-              </a>
+              <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto cursor-pointer" />
             </Link>
           </div>
           <nav className="flex items-center space-x-6">
             <Link href="/">
-              <a className="text-gray-700 hover:text-gray-900">Home</a>
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Home</span>
             </Link>
             <Link href="/documentation">
-              <a className="text-gray-700 hover:text-gray-900">Documentation</a>
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Documentation</span>
             </Link>
             <Link href="/community">
-              <a className="text-gray-700 hover:text-gray-900">Community</a>
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Community</span>
             </Link>
             <Link href="/blog">
-              <a className="text-gray-700 hover:text-gray-900">Blog</a>
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
             </Link>
             <Link href="/journal">
               <Button variant="outline">Sign in</Button>
@@ -51,14 +49,14 @@ export default function HomePage() {
           </p>
           <div className="flex justify-center gap-4">
             <Link href="/journal">
-              <Button className="gap-2">
-                Get Started
-              </Button>
+              <Button className="gap-2">Get Started</Button>
             </Link>
-            <Button variant="outline" className="gap-2">
-              <Github className="w-5 h-5" />
-              View on GitHub
-            </Button>
+            <a href="https://github.com/spirit-framework" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="gap-2">
+                <Github className="w-5 h-5" />
+                View on GitHub
+              </Button>
+            </a>
           </div>
         </div>
       </div>
@@ -97,7 +95,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Our Applications Section */}
+      {/* Applications Section */}
       <div className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-16">Our Applications</h2>
@@ -217,20 +215,20 @@ export default function HomePage() {
               <ul className="mt-4 space-y-4">
                 <li>
                   <Link href="/journal">
-                    <a className="text-sm text-gray-300 hover:text-white">
+                    <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                       Spirit Journal
-                    </a>
+                    </span>
                   </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Spirit Study
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Spirit Code
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -240,19 +238,19 @@ export default function HomePage() {
               </h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Documentation
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Blog
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Community
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -262,14 +260,14 @@ export default function HomePage() {
               </h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Privacy Policy
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white">
+                  <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                     Terms of Service
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>
