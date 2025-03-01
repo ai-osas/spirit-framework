@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, json, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { mediaSchema } from "../client/src/types/journal";
@@ -9,6 +9,9 @@ export const journalEntries = pgTable("journal_entries", {
   content: text("content").notNull(),
   wallet_address: text("wallet_address").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
+  reward_status: text("reward_status").notNull().default('pending'), // 'pending', 'approved', 'denied'
+  reward_amount: text("reward_amount"), // Stored as string to handle BigInt
+  distributed_at: timestamp("distributed_at"),
   media: json("media").$type<Array<{
     id: string;
     file_type: 'image' | 'audio';
@@ -17,7 +20,7 @@ export const journalEntries = pgTable("journal_entries", {
 });
 
 export const insertJournalEntrySchema = createInsertSchema(journalEntries)
-  .omit({ id: true, created_at: true })
+  .omit({ id: true, created_at: true, reward_status: true, reward_amount: true, distributed_at: true })
   .extend({
     media: z.array(mediaSchema).nullable()
   });

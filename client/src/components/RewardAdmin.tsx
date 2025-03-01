@@ -4,6 +4,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "../hooks/use-toast";
 import { Loader2 } from 'lucide-react';
+import { AdminQueue } from './AdminQueue';
 
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
@@ -103,128 +104,128 @@ export function RewardAdmin() {
   const remainingForDistribution = maxDistribution - Number(distributorBalance);
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-lg">Distribution Statistics</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <p className="text-sm text-gray-500">Total Supply</p>
-            <p className="text-lg font-medium">{Number(totalSupply).toFixed(2)} SPIRIT</p>
-          </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribution Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-500">Total Supply</p>
+              <p className="text-lg font-medium">{Number(totalSupply).toFixed(2)} SPIRIT</p>
+            </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Distribution Cap (40%)</p>
-            <p className="text-lg font-medium">{maxDistribution.toFixed(2)} SPIRIT</p>
-          </div>
+            <div>
+              <p className="text-sm text-gray-500">Distribution Cap (40%)</p>
+              <p className="text-lg font-medium">{maxDistribution.toFixed(2)} SPIRIT</p>
+            </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Currently Distributed</p>
-            <p className="text-lg font-medium">{Number(distributorBalance).toFixed(2)} SPIRIT</p>
-            <p className="text-xs text-gray-400">
-              {currentDistributionPercentage.toFixed(2)}% of total supply used
-            </p>
-          </div>
+            <div>
+              <p className="text-sm text-gray-500">Available for Distribution</p>
+              <p className="text-lg font-medium">{Number(distributorBalance).toFixed(2)} SPIRIT</p>
+              <p className="text-xs text-gray-400">
+                {currentDistributionPercentage.toFixed(2)}% of total supply available
+              </p>
+            </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Remaining for Distribution</p>
-            <p className="text-lg font-medium">{remainingForDistribution.toFixed(2)} SPIRIT</p>
-          </div>
+            <div>
+              <p className="text-sm text-gray-500">Unique Recipients</p>
+              <p className="text-lg font-medium">{uniqueRecipients.size}</p>
+            </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Unique Recipients</p>
-            <p className="text-lg font-medium">{uniqueRecipients.size}</p>
-          </div>
+            {/* Fund distribution contract button */}
+            <div className="mt-4">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
+                onClick={async () => {
+                  try {
+                    setIsLoading(true);
 
-          {/* Fund distribution contract button */}
-          <div className="mt-4">
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
-              onClick={async () => {
-                try {
-                  setIsLoading(true);
+                    if (!window.ethereum) {
+                      toast({
+                        variant: "destructive",
+                        title: "Web3 Wallet Required",
+                        description: "Please install a Web3 wallet like MetaMask to fund the distribution contract."
+                      });
+                      return;
+                    }
 
-                  if (!window.ethereum) {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const tokenContract = new ethers.Contract(
+                      SPIRIT_TOKEN_ADDRESS,
+                      TOKEN_ABI,
+                      signer
+                    );
+
+                    // Verify contract before proceeding
+                    try {
+                      const [name, symbol] = await Promise.all([
+                        tokenContract.name(),
+                        tokenContract.symbol()
+                      ]);
+
+                      if (name !== "$SPIRIT Test Token" || symbol !== "SPIRIT_T") {
+                        throw new Error("Invalid token contract - please verify deployment");
+                      }
+                    } catch (error: any) {
+                      if (error.code === 'BAD_DATA') {
+                        throw new Error("SPIRIT token contract not found on this network. Please verify the contract deployment.");
+                      }
+                      throw error;
+                    }
+
+                    // Fund with 1000 SPIRIT tokens
+                    const fundAmount = ethers.parseUnits("1000", 18);
+
+                    // Check admin wallet balance first
+                    const adminBalance = await tokenContract.balanceOf(account);
+                    if (adminBalance < fundAmount) {
+                      throw new Error("Your wallet doesn't have enough SPIRIT tokens to fund the distribution contract.");
+                    }
+
+                    // Transfer tokens to distribution contract
+                    const tx = await tokenContract.transfer(REWARD_DISTRIBUTION_ADDRESS, fundAmount);
+
+                    toast({
+                      title: "Transaction Submitted",
+                      description: "Funding transaction submitted. Please wait for confirmation."
+                    });
+
+                    await tx.wait();
+
+                    toast({
+                      title: "Distribution Contract Funded",
+                      description: "Successfully transferred SPIRIT tokens to the distribution contract."
+                    });
+
+                    // Refresh stats
+                    await fetchDistributionStats();
+
+                  } catch (error: any) {
+                    console.error("Failed to fund distribution contract:", error);
                     toast({
                       variant: "destructive",
-                      title: "Web3 Wallet Required",
-                      description: "Please install a Web3 wallet like MetaMask to fund the distribution contract."
+                      title: "Funding Failed",
+                      description: error.message || "Failed to fund distribution contract. Please try again."
                     });
-                    return;
+                  } finally {
+                    setIsLoading(false);
                   }
-
-                  const provider = new ethers.BrowserProvider(window.ethereum);
-                  const signer = await provider.getSigner();
-                  const tokenContract = new ethers.Contract(
-                    SPIRIT_TOKEN_ADDRESS,
-                    TOKEN_ABI,
-                    signer
-                  );
-
-                  // Verify contract before proceeding
-                  try {
-                    const [name, symbol] = await Promise.all([
-                      tokenContract.name(),
-                      tokenContract.symbol()
-                    ]);
-
-                    if (name !== "$SPIRIT Test Token" || symbol !== "SPIRIT_T") {
-                      throw new Error("Invalid token contract - please verify deployment");
-                    }
-                  } catch (error: any) {
-                    if (error.code === 'BAD_DATA') {
-                      throw new Error("SPIRIT token contract not found on this network. Please verify the contract deployment.");
-                    }
-                    throw error;
-                  }
-
-                  // Fund with 1000 SPIRIT tokens
-                  const fundAmount = ethers.parseUnits("1000", 18);
-
-                  // Check admin wallet balance first
-                  const adminBalance = await tokenContract.balanceOf(account);
-                  if (adminBalance < fundAmount) {
-                    throw new Error("Your wallet doesn't have enough SPIRIT tokens to fund the distribution contract.");
-                  }
-
-                  // Transfer tokens to distribution contract
-                  const tx = await tokenContract.transfer(REWARD_DISTRIBUTION_ADDRESS, fundAmount);
-
-                  toast({
-                    title: "Transaction Submitted",
-                    description: "Funding transaction submitted. Please wait for confirmation."
-                  });
-
-                  await tx.wait();
-
-                  toast({
-                    title: "Distribution Contract Funded",
-                    description: "Successfully transferred SPIRIT tokens to the distribution contract."
-                  });
-
-                  // Refresh stats
-                  await fetchDistributionStats();
-
-                } catch (error: any) {
-                  console.error("Failed to fund distribution contract:", error);
-                  toast({
-                    variant: "destructive",
-                    title: "Funding Failed",
-                    description: error.message || "Failed to fund distribution contract. Please try again."
-                  });
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
-            >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Fund Distribution Contract
-            </button>
+                }}
+              >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Fund Distribution Contract
+              </button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Add the AdminQueue component for managing pending rewards */}
+      <AdminQueue />
+    </div>
   );
 }

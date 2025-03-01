@@ -109,21 +109,6 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       return;
     }
 
-    // Double check wallet connection
-    if (!account && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length === 0) {
-          setSaveError('Please connect your wallet before saving');
-          return;
-        }
-      } catch (err) {
-        console.error('Failed to check wallet connection:', err);
-        setSaveError('Please connect your wallet before saving');
-        return;
-      }
-    }
-
     if (!account) {
       setSaveError('Please connect your wallet before saving');
       return;
@@ -151,34 +136,35 @@ export default function JournalEntry({ id }: JournalEntryProps) {
         // First save the entry
         const savedEntry = await createEntryMutation.mutateAsync(entryData);
 
-        // Calculate and distribute reward for new entries
+        // Calculate reward amount but don't distribute immediately
         try {
-          // Get the latest entry before this one
           const previousEntry = entries[entries.length - 1];
           const rewardAmount = await calculateEntryReward(savedEntry, previousEntry);
 
-          // Only attempt distribution if there's a reward to give
+          // Only queue for reward if amount is greater than 0
           if (rewardAmount > 0) {
             try {
-              await distributeReward(account, rewardAmount);
-
-              toast({
-                title: "Reward Earned!",
-                description: `You've earned SPIRIT tokens for your journal entry! Rewards increase with longer entries, media attachments, and daily entries.`,
+              // Update entry with reward amount, status remains 'pending'
+              await apiRequest('PATCH', `/api/journal/entries/${savedEntry.id}/reward`, {
+                reward_amount: rewardAmount.toString()
               });
 
-              queryClient.invalidateQueries({ queryKey: ['token-balance'] });
-            } catch (distributionError: any) {
-              console.error('Failed to distribute reward:', distributionError);
+              toast({
+                title: "Entry Submitted for Review",
+                description: "Your journal entry has been submitted for reward approval. Please wait for admin review.",
+              });
+
+            } catch (error: any) {
+              console.error('Failed to queue reward:', error);
               toast({
                 variant: "destructive",
-                title: "Reward Distribution Failed",
-                description: distributionError.message || "Failed to distribute SPIRIT tokens. Please try again later.",
+                title: "Reward Queue Failed",
+                description: error.message || "Failed to queue your reward for approval. Please try again later.",
               });
             }
           } else {
             toast({
-              title: "No Reward Earned",
+              title: "No Reward Eligible",
               description: "Journal entries need to be at least 200 characters long to earn rewards. Add media or maintain daily entries for bonus rewards!",
             });
           }
@@ -187,7 +173,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           toast({
             variant: "destructive",
             title: "Reward Calculation Failed",
-            description: rewardError.message || "Failed to calculate SPIRIT tokens. Please try again later.",
+            description: rewardError.message || "Failed to calculate potential reward. Please try again later.",
           });
         }
       }
