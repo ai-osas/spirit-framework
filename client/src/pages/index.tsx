@@ -15,26 +15,6 @@ export default function HomePage() {
               <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto cursor-pointer" />
             </Link>
           </div>
-          <nav className="flex items-center space-x-6">
-            <Link href="/">
-              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Home</span>
-            </Link>
-            <Link href="/documentation">
-              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Documentation</span>
-            </Link>
-            <Link href="/community">
-              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Community</span>
-            </Link>
-            <Link href="/blog">
-              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
-            </Link>
-            <Link href="/journal">
-              <Button variant="outline">Sign in</Button>
-            </Link>
-            <Link href="/journal">
-              <Button>Sign up</Button>
-            </Link>
-          </nav>
         </div>
       </header>
 
