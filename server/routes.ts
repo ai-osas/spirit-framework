@@ -9,6 +9,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(entries);
   });
 
+  app.get("/api/journal/entries/pending", async (req, res) => {
+    try {
+      const pendingEntries = await storage.getPendingEntries();
+      res.json(pendingEntries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending entries" });
+    }
+  });
+
   app.get("/api/journal/entries/:id", async (req, res) => {
     const entry = await storage.getEntry(req.params.id);
     if (!entry) {
@@ -39,6 +48,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(entry);
     } catch (error) {
       res.status(404).json({ message: "Entry not found" });
+    }
+  });
+
+  app.patch("/api/journal/entries/:id/reward", async (req, res) => {
+    try {
+      await storage.updateEntryReward(req.params.id, req.body.reward_amount);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update reward amount" });
+    }
+  });
+
+  app.post("/api/journal/entries/:id/status", async (req, res) => {
+    const { status, rewardAmount } = req.body;
+    if (!['approved', 'denied'].includes(status)) {
+      res.status(400).json({ message: "Invalid status" });
+      return;
+    }
+    try {
+      await storage.updateEntryStatus(req.params.id, status, rewardAmount);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update entry status" });
     }
   });
 
