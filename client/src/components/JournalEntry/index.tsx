@@ -137,6 +137,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
         title,
         content,
         wallet_address: account,
+        created_at: new Date(),
         media: media.map(m => ({
           id: m.id,
           file_type: m.type,
@@ -148,16 +149,16 @@ export default function JournalEntry({ id }: JournalEntryProps) {
         await updateEntryMutation.mutateAsync({ id, data: entryData });
       } else {
         // First save the entry
-        await createEntryMutation.mutateAsync(entryData);
+        const savedEntry = await createEntryMutation.mutateAsync(entryData);
 
         // Calculate and distribute reward for new entries
         try {
           // Get the latest entry before this one
           const previousEntry = entries[entries.length - 1];
-          const rewardAmount = await calculateEntryReward(entryData, previousEntry);
+          const rewardAmount = await calculateEntryReward(savedEntry, previousEntry);
 
           // Only attempt distribution if there's a reward to give
-          if (rewardAmount > 0) {  
+          if (rewardAmount > 0) {
             try {
               await distributeReward(account, rewardAmount);
 

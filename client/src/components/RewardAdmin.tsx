@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { toast } from "../hooks/use-toast";
-import { Loader2 } from 'lucide-react';
 
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
@@ -19,7 +17,6 @@ const TOKEN_ABI = [
 
 export function RewardAdmin() {
   const { account } = useWallet();
-  const [isLoading, setIsLoading] = useState(false);
   const [distributorBalance, setDistributorBalance] = useState<string>('0');
   const [totalSupply, setTotalSupply] = useState<string>('0');
   const [uniqueRecipients, setUniqueRecipients] = useState<Set<string>>(new Set());
@@ -47,7 +44,10 @@ export function RewardAdmin() {
         // Get transfer events from distributor to track unique recipients
         const filter = tokenContract.filters.Transfer(REWARD_DISTRIBUTION_ADDRESS, null);
         const events = await tokenContract.queryFilter(filter);
-        const recipients = new Set(events.map(e => e.args?.[1].toLowerCase()));
+        const recipients = new Set(events.map(e => {
+          const event = e as ethers.EventLog;
+          return event.args?.[1].toLowerCase() || '';
+        }));
         setUniqueRecipients(recipients);
 
       } catch (error) {
