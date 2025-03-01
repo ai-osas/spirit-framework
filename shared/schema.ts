@@ -1,6 +1,7 @@
 import { pgTable, text, serial, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { mediaSchema } from "../client/src/types/journal";
 
 export const journalEntries = pgTable("journal_entries", {
   id: serial("id").primaryKey(),
@@ -12,17 +13,13 @@ export const journalEntries = pgTable("journal_entries", {
     id: string;
     file_type: 'image' | 'audio';
     file_url: string;
-  }>>(),
+  }> | null>(),
 });
 
 export const insertJournalEntrySchema = createInsertSchema(journalEntries)
   .omit({ id: true, created_at: true })
   .extend({
-    media: z.array(z.object({
-      id: z.string(),
-      file_type: z.enum(['image', 'audio']),
-      file_url: z.string()
-    })).optional()
+    media: z.array(mediaSchema).nullable()
   });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

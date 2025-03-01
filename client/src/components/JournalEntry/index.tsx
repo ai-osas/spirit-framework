@@ -157,7 +157,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           const rewardAmount = await calculateEntryReward(entryData, previousEntry);
 
           // Only attempt distribution if there's a reward to give
-          if (rewardAmount > 0n) {
+          if (rewardAmount > 0) {  
             try {
               await distributeReward(account, rewardAmount);
 
