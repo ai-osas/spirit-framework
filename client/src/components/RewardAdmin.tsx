@@ -9,10 +9,14 @@ const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
 const ADMIN_WALLET = '0xcb2FCB4802eBc2c17b7f06C12b03918c85faC2d0';
 
-// ABI for token balance and transfer event checks
+// ABI matching our deployed SPIRIT_TestToken contract
 const TOKEN_ABI = [
-  "function balanceOf(address account) view returns (uint256)",
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
   "function totalSupply() view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)",
   "event Transfer(address indexed from, address indexed to, uint256 value)"
 ];
 
@@ -21,17 +25,28 @@ export function RewardAdmin() {
   const [distributorBalance, setDistributorBalance] = useState<string>('0');
   const [totalSupply, setTotalSupply] = useState<string>('0');
   const [uniqueRecipients, setUniqueRecipients] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(false);
 
   // Only proceed if the connected wallet is the admin wallet
   const isAdmin = account?.toLowerCase() === ADMIN_WALLET.toLowerCase();
 
-  useEffect(() => {
-    const fetchDistributionStats = async () => {
-      if (!account || !window.ethereum || !isAdmin) return;
+  const fetchDistributionStats = async () => {
+    if (!account || !window.ethereum || !isAdmin) return;
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS, TOKEN_ABI, provider);
 
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS, TOKEN_ABI, provider);
+        // First verify the contract exists and is accessible
+        const [name, symbol] = await Promise.all([
+          tokenContract.name(),
+          tokenContract.symbol()
+        ]);
+
+        if (name !== "$SPIRIT Test Token" || symbol !== "SPIRIT_T") {
+          throw new Error("Invalid token contract - please verify deployment");
+        }
 
         // Get total supply and distributor balance
         const [supply, balance] = await Promise.all([
@@ -51,11 +66,30 @@ export function RewardAdmin() {
         }));
         setUniqueRecipients(recipients);
 
-      } catch (error) {
-        console.error('Failed to fetch distribution stats:', error);
+      } catch (error: any) {
+        console.error('Contract verification failed:', error);
+        if (error.code === 'BAD_DATA') {
+          toast({
+            variant: "destructive",
+            title: "Contract Not Found",
+            description: "The SPIRIT token contract could not be found. Please verify the contract deployment on Electroneum testnet."
+          });
+        } else {
+          throw error;
+        }
       }
-    };
 
+    } catch (error) {
+      console.error('Failed to fetch distribution stats:', error);
+      toast({
+        variant: "destructive",
+        title: "Failed to Load Stats",
+        description: "Could not load distribution statistics. Please verify your network connection and contract deployment."
+      });
+    }
+  };
+
+  useEffect(() => {
     fetchDistributionStats();
     const interval = setInterval(fetchDistributionStats, 10000);
     return () => clearInterval(interval);
@@ -103,12 +137,15 @@ export function RewardAdmin() {
             <p className="text-lg font-medium">{uniqueRecipients.size}</p>
           </div>
 
-          {/* Add button to fund distribution contract */}
+          {/* Fund distribution contract button */}
           <div className="mt-4">
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
               onClick={async () => {
                 try {
+                  setIsLoading(true);
+
                   if (!window.ethereum) {
                     toast({
                       variant: "destructive",
@@ -122,25 +159,34 @@ export function RewardAdmin() {
                   const signer = await provider.getSigner();
                   const tokenContract = new ethers.Contract(
                     SPIRIT_TOKEN_ADDRESS,
-                    [
-                      "function transfer(address to, uint256 amount) returns (bool)",
-                      "function balanceOf(address account) view returns (uint256)"
-                    ],
+                    TOKEN_ABI,
                     signer
                   );
 
-                  // Fund with 1000 SPIRIT tokens (adjust as needed)
+                  // Verify contract before proceeding
+                  try {
+                    const [name, symbol] = await Promise.all([
+                      tokenContract.name(),
+                      tokenContract.symbol()
+                    ]);
+
+                    if (name !== "$SPIRIT Test Token" || symbol !== "SPIRIT_T") {
+                      throw new Error("Invalid token contract - please verify deployment");
+                    }
+                  } catch (error: any) {
+                    if (error.code === 'BAD_DATA') {
+                      throw new Error("SPIRIT token contract not found on this network. Please verify the contract deployment.");
+                    }
+                    throw error;
+                  }
+
+                  // Fund with 1000 SPIRIT tokens
                   const fundAmount = ethers.parseUnits("1000", 18);
 
                   // Check admin wallet balance first
                   const adminBalance = await tokenContract.balanceOf(account);
                   if (adminBalance < fundAmount) {
-                    toast({
-                      variant: "destructive",
-                      title: "Insufficient Balance",
-                      description: "Your wallet doesn't have enough SPIRIT tokens to fund the distribution contract."
-                    });
-                    return;
+                    throw new Error("Your wallet doesn't have enough SPIRIT tokens to fund the distribution contract.");
                   }
 
                   // Transfer tokens to distribution contract
@@ -158,7 +204,7 @@ export function RewardAdmin() {
                     description: "Successfully transferred SPIRIT tokens to the distribution contract."
                   });
 
-                  // Refresh stats - This line was missing in the edited code but is crucial for UX.  It's added back.
+                  // Refresh stats
                   await fetchDistributionStats();
 
                 } catch (error: any) {
@@ -168,10 +214,12 @@ export function RewardAdmin() {
                     title: "Funding Failed",
                     description: error.message || "Failed to fund distribution contract. Please try again."
                   });
+                } finally {
+                  setIsLoading(false);
                 }
               }}
             >
-              <Loader2 className="w-4 h-4 animate-spin" />
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               Fund Distribution Contract
             </button>
           </div>
