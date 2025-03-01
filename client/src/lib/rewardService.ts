@@ -118,8 +118,11 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     );
 
     const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
+    console.log('Contract balance:', contractBalance.toString());
+    console.log('Required amount:', amount.toString());
+
     if (contractBalance < amount) {
-      throw new Error('The reward contract is currently out of SPIRIT tokens. Please try again later or contact the administrators.');
+      throw new Error('The reward system is not yet initialized with SPIRIT tokens. Please wait for the system to be funded.');
     }
 
     // Request network switch to Electroneum Testnet
@@ -172,8 +175,8 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       throw new Error('Transaction was rejected by user');
     } else if (error.code === -32000) {
       throw new Error('Insufficient ETN for transaction. Visit https://faucet.electroneum.com/ to get testnet ETN');
-    } else if (error.message.includes('insufficient contract balance')) {
-      throw new Error('The reward contract is currently out of SPIRIT tokens. Please try again later or contact the administrators.');
+    } else if (error.message.includes('insufficient contract balance') || error.message.includes('system is not yet initialized')) {
+      throw new Error('The reward system is not yet initialized with SPIRIT tokens. Please wait for the system to be funded.');
     } else if (error.data?.message?.includes('execution reverted')) {
       throw new Error('Smart contract execution failed. Please verify contract status on testnet explorer');
     } else if (error.message.includes('network')) {
