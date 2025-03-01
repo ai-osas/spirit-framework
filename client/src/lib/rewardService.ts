@@ -150,14 +150,14 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       provider
     );
 
-    // Check if token contract exists
+    // Check if token contract exists and has sufficient balance
     try {
       const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
       console.log('Contract balance:', contractBalance.toString());
       console.log('Required amount:', amount.toString());
 
       if (contractBalance < amount) {
-        throw new Error('The reward system is not yet initialized with SPIRIT tokens. Please wait for the system to be funded.');
+        throw new Error('The reward distribution contract has insufficient SPIRIT tokens. Please contact an administrator to fund the contract.');
       }
     } catch (error: any) {
       if (error.code === 'BAD_DATA' || error.message.includes('could not decode result data')) {

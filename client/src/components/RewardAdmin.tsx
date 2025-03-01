@@ -106,3 +106,85 @@ export function RewardAdmin() {
     </Card>
   );
 }
+
+          <div>
+            <p className="text-sm text-gray-500">Unique Recipients</p>
+            <p className="text-lg font-medium">{uniqueRecipients.size}</p>
+          </div>
+
+          {/* Add button to fund distribution contract */}
+          <div className="mt-4">
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              onClick={async () => {
+                try {
+                  if (!window.ethereum) {
+                    toast({
+                      variant: "destructive",
+                      title: "Web3 Wallet Required",
+                      description: "Please install a Web3 wallet like MetaMask to fund the distribution contract."
+                    });
+                    return;
+                  }
+
+                  const provider = new ethers.BrowserProvider(window.ethereum);
+                  const signer = await provider.getSigner();
+                  const tokenContract = new ethers.Contract(
+                    SPIRIT_TOKEN_ADDRESS,
+                    [
+                      "function transfer(address to, uint256 amount) returns (bool)",
+                      "function balanceOf(address account) view returns (uint256)"
+                    ],
+                    signer
+                  );
+
+                  // Fund with 1000 SPIRIT tokens (adjust as needed)
+                  const fundAmount = ethers.parseUnits("1000", 18);
+                  
+                  // Check admin wallet balance first
+                  const adminBalance = await tokenContract.balanceOf(account);
+                  if (adminBalance < fundAmount) {
+                    toast({
+                      variant: "destructive",
+                      title: "Insufficient Balance",
+                      description: "Your wallet doesn't have enough SPIRIT tokens to fund the distribution contract."
+                    });
+                    return;
+                  }
+
+                  // Transfer tokens to distribution contract
+                  const tx = await tokenContract.transfer(REWARD_DISTRIBUTION_ADDRESS, fundAmount);
+                  
+                  toast({
+                    title: "Transaction Submitted",
+                    description: "Funding transaction submitted. Please wait for confirmation."
+                  });
+                  
+                  await tx.wait();
+                  
+                  toast({
+                    title: "Distribution Contract Funded",
+                    description: "Successfully transferred SPIRIT tokens to the distribution contract."
+                  });
+                  
+                  // Refresh stats
+                  await fetchDistributionStats();
+                  
+                } catch (error: any) {
+                  console.error("Failed to fund distribution contract:", error);
+                  toast({
+                    variant: "destructive",
+                    title: "Funding Failed",
+                    description: error.message || "Failed to fund distribution contract. Please try again."
+                  });
+                }
+              }}
+            >
+              Fund Distribution Contract
+            </button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
