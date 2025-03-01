@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "../hooks/use-toast";
+import { Loader2 } from 'lucide-react';
 
 const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
 const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
@@ -101,21 +102,11 @@ export function RewardAdmin() {
             <p className="text-sm text-gray-500">Unique Recipients</p>
             <p className="text-lg font-medium">{uniqueRecipients.size}</p>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-          <div>
-            <p className="text-sm text-gray-500">Unique Recipients</p>
-            <p className="text-lg font-medium">{uniqueRecipients.size}</p>
-          </div>
 
           {/* Add button to fund distribution contract */}
           <div className="mt-4">
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
               onClick={async () => {
                 try {
                   if (!window.ethereum) {
@@ -140,7 +131,7 @@ export function RewardAdmin() {
 
                   // Fund with 1000 SPIRIT tokens (adjust as needed)
                   const fundAmount = ethers.parseUnits("1000", 18);
-                  
+
                   // Check admin wallet balance first
                   const adminBalance = await tokenContract.balanceOf(account);
                   if (adminBalance < fundAmount) {
@@ -154,22 +145,22 @@ export function RewardAdmin() {
 
                   // Transfer tokens to distribution contract
                   const tx = await tokenContract.transfer(REWARD_DISTRIBUTION_ADDRESS, fundAmount);
-                  
+
                   toast({
                     title: "Transaction Submitted",
                     description: "Funding transaction submitted. Please wait for confirmation."
                   });
-                  
+
                   await tx.wait();
-                  
+
                   toast({
                     title: "Distribution Contract Funded",
                     description: "Successfully transferred SPIRIT tokens to the distribution contract."
                   });
-                  
-                  // Refresh stats
+
+                  // Refresh stats - This line was missing in the edited code but is crucial for UX.  It's added back.
                   await fetchDistributionStats();
-                  
+
                 } catch (error: any) {
                   console.error("Failed to fund distribution contract:", error);
                   toast({
@@ -180,6 +171,7 @@ export function RewardAdmin() {
                 }
               }}
             >
+              <Loader2 className="w-4 h-4 animate-spin" />
               Fund Distribution Contract
             </button>
           </div>
