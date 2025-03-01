@@ -1,7 +1,7 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Github, Coffee, BookOpen, Users, Code, Heart } from 'lucide-react';
+import { Github, Heart, Coffee } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -16,22 +16,22 @@ export default function HomePage() {
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link href="/">
-                  <a className="border-yellow-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  <a className="border-transparent text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
                     Home
                   </a>
                 </Link>
                 <Link href="/docs">
-                  <a className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  <a className="border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">
                     Documentation
                   </a>
                 </Link>
                 <Link href="/community">
-                  <a className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  <a className="border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">
                     Community
                   </a>
                 </Link>
                 <Link href="/blog">
-                  <a className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  <a className="border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 text-sm font-medium">
                     Blog
                   </a>
                 </Link>
@@ -50,19 +50,21 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="bg-yellow-50">
+      <div className="bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <img src="/spirit-logo-full.svg" alt="Spirit Framework" className="h-24 mx-auto mb-8" />
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Mapping the constellations between code, stories, and human potential
+            Spirit Framework
           </h1>
-          <div className="flex justify-center gap-4 mt-8">
+          <p className="text-xl text-gray-600 mb-8">
+            Mapping the constellations between code, stories, and human potential
+          </p>
+          <div className="flex justify-center gap-4">
             <Link href="/journal">
-              <Button size="lg" className="gap-2">
+              <Button className="gap-2">
                 Get Started
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2">
               <Github className="w-5 h-5" />
               View on GitHub
             </Button>
@@ -70,97 +72,64 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Mission Section */}
+      {/* Our Mission Section */}
       <div className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-16">Our Mission</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-yellow-500" />
-                  Natural Learning
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Understanding and nurturing how minds naturally learn and grow.
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="w-5 h-5 text-yellow-500" />
-                  Open Technology
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Building tools that adapt to individual learning patterns.
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-yellow-500" />
-                  Community Driven
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Growing through collaboration and shared understanding.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="p-6 bg-gray-50 rounded-lg">
+              <h3 className="text-xl font-semibold mb-4">Natural Learning</h3>
+              <p className="text-gray-600">
+                Understanding and nurturing how minds naturally learn and grow.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-lg">
+              <h3 className="text-xl font-semibold mb-4">Open Technology</h3>
+              <p className="text-gray-600">
+                Building tools that adapt to individual learning patterns.
+              </p>
+            </div>
+            <div className="p-6 bg-gray-50 rounded-lg">
+              <h3 className="text-xl font-semibold mb-4">Community Driven</h3>
+              <p className="text-gray-600">
+                Growing through collaboration and shared understanding.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Applications Section */}
+      {/* Our Applications Section */}
       <div className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-16">Our Applications</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Spirit Journal</CardTitle>
-                <div className="text-sm text-yellow-500 font-medium">Beta</div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Personal learning pattern journal
-                </p>
-                <Link href="/journal">
-                  <Button variant="outline" className="w-full">Learn More</Button>
-                </Link>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Spirit Study</CardTitle>
-                <div className="text-sm text-gray-500 font-medium">Coming Soon</div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Adaptive study companion
-                </p>
-                <Button variant="outline" className="w-full" disabled>Learn More</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Spirit Code</CardTitle>
-                <div className="text-sm text-gray-500 font-medium">Coming Soon</div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  VS Code learning extension
-                </p>
-                <Button variant="outline" className="w-full" disabled>Learn More</Button>
-              </CardContent>
-            </Card>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-xl font-semibold mb-2">Spirit Journal</h3>
+              <div className="text-sm text-yellow-500 font-medium mb-4">Beta</div>
+              <p className="text-gray-600 mb-4">
+                Personal learning pattern journal
+              </p>
+              <Link href="/journal">
+                <Button variant="outline" className="w-full">Learn More</Button>
+              </Link>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-xl font-semibold mb-2">Spirit Study</h3>
+              <div className="text-sm text-gray-500 font-medium mb-4">Coming Soon</div>
+              <p className="text-gray-600 mb-4">
+                Adaptive study companion
+              </p>
+              <Button variant="outline" className="w-full" disabled>Learn More</Button>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-xl font-semibold mb-2">Spirit Code</h3>
+              <div className="text-sm text-gray-500 font-medium mb-4">Coming Soon</div>
+              <p className="text-gray-600 mb-4">
+                VS Code learning extension
+              </p>
+              <Button variant="outline" className="w-full" disabled>Learn More</Button>
+            </div>
           </div>
         </div>
       </div>
