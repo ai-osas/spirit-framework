@@ -18,6 +18,13 @@ const ELECTRONEUM_NETWORK = {
   blockExplorerUrls: ['https://testnet-blockexplorer.electroneum.com/']
 };
 
+// ABI for ERC20 token contract
+const TOKEN_ABI = [
+  "function balanceOf(address account) view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+];
+
 // ABI for reward distribution contract
 const REWARD_DISTRIBUTION_ABI = [
   {
@@ -32,7 +39,7 @@ const REWARD_DISTRIBUTION_ABI = [
   }
 ];
 
-// Reward criteria configuration remains the same
+// Reward criteria configuration
 const REWARD_CRITERIA = {
   BASE_REWARD: ethers.parseUnits('0.5', 18),
   MIN_CONTENT_LENGTH: 200,
@@ -109,22 +116,6 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     console.log('Recipient:', recipientAddress);
     console.log('Amount:', amount.toString());
 
-    // Check contract balance first before network switch
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const tokenContract = new ethers.Contract(
-      SPIRIT_TOKEN_ADDRESS,
-      ['function balanceOf(address) view returns (uint256)'],
-      provider
-    );
-
-    const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
-    console.log('Contract balance:', contractBalance.toString());
-    console.log('Required amount:', amount.toString());
-
-    if (contractBalance < amount) {
-      throw new Error('The reward system is not yet initialized with SPIRIT tokens. Please wait for the system to be funded.');
-    }
-
     // Request network switch to Electroneum Testnet
     try {
       await window.ethereum.request({
@@ -148,10 +139,34 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       throw new Error('Please switch to Electroneum testnet to receive rewards');
     }
 
+    const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     console.log('Connected address:', await signer.getAddress());
 
-    // Create contract instance
+    // Create contract instances
+    const tokenContract = new ethers.Contract(
+      SPIRIT_TOKEN_ADDRESS,
+      TOKEN_ABI,
+      provider
+    );
+
+    // Check if token contract exists
+    try {
+      const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
+      console.log('Contract balance:', contractBalance.toString());
+      console.log('Required amount:', amount.toString());
+
+      if (contractBalance < amount) {
+        throw new Error('The reward system is not yet initialized with SPIRIT tokens. Please wait for the system to be funded.');
+      }
+    } catch (error: any) {
+      if (error.code === 'BAD_DATA' || error.message.includes('could not decode result data')) {
+        throw new Error('The SPIRIT token contract is not properly deployed on the Electroneum testnet. Please verify the contract deployment.');
+      }
+      throw error;
+    }
+
+    // Create reward contract instance
     const rewardContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS,
       REWARD_DISTRIBUTION_ABI,
@@ -170,13 +185,12 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 
-    // Enhanced error handling with specific messages
     if (error.code === 4001) {
       throw new Error('Transaction was rejected by user');
     } else if (error.code === -32000) {
       throw new Error('Insufficient ETN for transaction. Visit https://faucet.electroneum.com/ to get testnet ETN');
-    } else if (error.message.includes('insufficient contract balance') || error.message.includes('system is not yet initialized')) {
-      throw new Error('The reward system is not yet initialized with SPIRIT tokens. Please wait for the system to be funded.');
+    } else if (error.message.includes('token contract is not properly deployed')) {
+      throw error; // Pass through our custom error
     } else if (error.data?.message?.includes('execution reverted')) {
       throw new Error('Smart contract execution failed. Please verify contract status on testnet explorer');
     } else if (error.message.includes('network')) {
