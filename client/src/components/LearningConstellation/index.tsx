@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type JournalEntry } from '@shared/schema';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Loader2, Share2, Lock, BookmarkPlus, BookmarkCheck } from 'lucide-react';
+import { ChevronRight, Loader2, Share2, Lock, BookmarkPlus, BookmarkCheck, Sparkles } from 'lucide-react';
 import { analyzeLearningPatterns } from '@/lib/openai';
 import { useLocation } from 'wouter';
 import { useWallet } from '@/hooks/useWallet';
@@ -21,6 +21,36 @@ export function LearningConstellation({ entries, viewMode }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAllJournals, setShowAllJournals] = useState(false);
+
+  // Show Spirit Study placeholder when in learning mode
+  if (viewMode === 'learning') {
+    return (
+      <div className="grid place-items-center h-96">
+        <Card className="max-w-2xl p-8 text-center">
+          <div className="flex justify-center mb-6">
+            <Sparkles className="w-12 h-12 text-blue-500" />
+          </div>
+          <h3 className="text-2xl font-semibold mb-4">
+            Spirit Study Coming Soon
+          </h3>
+          <p className="text-gray-600 mb-6">
+            We're building an intelligent learning system that analyzes your journal entries
+            to create personalized learning paths. Spirit Study will help you discover
+            patterns in your learning journey and suggest optimal ways to deepen your understanding.
+          </p>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-medium text-blue-700 mb-2">What to Expect</h4>
+            <ul className="text-sm text-blue-600 text-left list-disc list-inside space-y-2">
+              <li>AI-powered learning path recommendations</li>
+              <li>Personalized study materials based on your interests</li>
+              <li>Progress tracking and adaptive learning suggestions</li>
+              <li>Connection to a community of like-minded learners</li>
+            </ul>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   // Get all patterns
   const { data: patterns = [], isLoading } = useQuery({
