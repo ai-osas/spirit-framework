@@ -1,4 +1,15 @@
 import { type JournalEntry, type InsertJournalEntry } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { type JournalEntry as JournalEntryType, type InsertJournalEntry as InsertJournalEntryType, journalEntries } from "@shared/schema";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
+}
+
+const client = postgres(process.env.DATABASE_URL);
+const db = drizzle(client);
 
 export interface IStorage {
   getEntries(): Promise<JournalEntry[]>;
@@ -11,89 +22,76 @@ export interface IStorage {
   updateEntryReward(id: string, rewardAmount: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private entries: Map<string, JournalEntry>;
-  private currentId: number;
-
-  constructor() {
-    this.entries = new Map();
-    this.currentId = 1;
-  }
-
+export class PostgresStorage implements IStorage {
   async getEntries(): Promise<JournalEntry[]> {
-    return Array.from(this.entries.values());
+    return await db.select().from(journalEntries);
   }
 
   async getEntry(id: string): Promise<JournalEntry | undefined> {
-    return this.entries.get(id);
+    const results = await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.id, parseInt(id)));
+    return results[0];
   }
 
   async createEntry(entry: InsertJournalEntry): Promise<JournalEntry> {
-    const id = this.currentId++;
-    const newEntry: JournalEntry = {
-      ...entry,
-      id,
-      created_at: new Date(),
-      reward_status: 'pending',
-      reward_amount: null,
-      distributed_at: null
-    };
-    this.entries.set(id.toString(), newEntry);
+    const [newEntry] = await db
+      .insert(journalEntries)
+      .values({
+        ...entry,
+        created_at: new Date(),
+        reward_status: 'pending',
+        reward_amount: null,
+        distributed_at: null
+      })
+      .returning();
     return newEntry;
   }
 
   async updateEntry(id: string, entry: InsertJournalEntry): Promise<JournalEntry> {
-    const existingEntry = await this.getEntry(id);
-    if (!existingEntry) {
+    const [updatedEntry] = await db
+      .update(journalEntries)
+      .set(entry)
+      .where(eq(journalEntries.id, parseInt(id)))
+      .returning();
+
+    if (!updatedEntry) {
       throw new Error("Entry not found");
     }
-    const updatedEntry: JournalEntry = {
-      ...entry,
-      id: existingEntry.id,
-      created_at: existingEntry.created_at,
-      reward_status: existingEntry.reward_status,
-      reward_amount: existingEntry.reward_amount,
-      distributed_at: existingEntry.distributed_at
-    };
-    this.entries.set(id, updatedEntry);
     return updatedEntry;
   }
 
   async deleteEntry(id: string): Promise<void> {
-    this.entries.delete(id);
+    await db
+      .delete(journalEntries)
+      .where(eq(journalEntries.id, parseInt(id)));
   }
 
   async getPendingEntries(): Promise<JournalEntry[]> {
-    return Array.from(this.entries.values()).filter(entry => entry.reward_status === 'pending');
+    return await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.reward_status, 'pending'));
   }
 
   async updateEntryStatus(id: string, status: 'approved' | 'denied', rewardAmount?: string): Promise<void> {
-    const entry = await this.getEntry(id);
-    if (!entry) {
-      throw new Error("Entry not found");
-    }
-
-    const updatedEntry: JournalEntry = {
-      ...entry,
-      reward_status: status,
-      reward_amount: status === 'approved' ? rewardAmount || entry.reward_amount : null,
-      distributed_at: status === 'approved' ? new Date() : null
-    };
-    this.entries.set(id, updatedEntry);
+    await db
+      .update(journalEntries)
+      .set({
+        reward_status: status,
+        reward_amount: status === 'approved' ? rewardAmount || null : null,
+        distributed_at: status === 'approved' ? new Date() : null
+      })
+      .where(eq(journalEntries.id, parseInt(id)));
   }
 
   async updateEntryReward(id: string, rewardAmount: string): Promise<void> {
-    const entry = await this.getEntry(id);
-    if (!entry) {
-      throw new Error("Entry not found");
-    }
-
-    const updatedEntry: JournalEntry = {
-      ...entry,
-      reward_amount: rewardAmount
-    };
-    this.entries.set(id, updatedEntry);
+    await db
+      .update(journalEntries)
+      .set({ reward_amount: rewardAmount })
+      .where(eq(journalEntries.id, parseInt(id)));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new PostgresStorage();
