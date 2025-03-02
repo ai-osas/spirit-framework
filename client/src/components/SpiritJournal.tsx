@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation, Link } from 'wouter';
+import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
 import { TokenBalance } from './TokenBalance';
-import { RewardAdmin } from './RewardAdmin';
+import { RewardAdmin } from './RewardAdmin'; // Added import
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
@@ -59,87 +59,67 @@ export default function SpiritJournal() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Updated Header */}
-      <header className="fixed top-0 left-0 right-0 border-b bg-white z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <Link href="/">
-              <span className="flex items-center gap-2 cursor-pointer">
-                <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto" />
-                <span className="text-lg font-semibold">Spirit Framework</span>
-              </span>
-            </Link>
+      {/* Sidebar */}
+      <div className="w-64 border-r bg-white">
+        <div className="p-4">
+          <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
+
+          <TokenBalance />
+          <RewardAdmin /> {/* Added RewardAdmin component */}
+
+          <Button 
+            onClick={() => navigate('/journal/new')}
+            className="w-full mb-8 mt-4"
+          >
+            <PlusCircle className="w-4 h-4 mr-2" />
+            New Entry
+          </Button>
+
+          <div className="space-y-1">
+            <h2 className="text-sm font-medium mb-2 text-gray-500">YOUR PATTERNS</h2>
+            <Button
+              variant="ghost"
+              className="w-full justify-start bg-blue-50"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Recent Insights
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Learning Paths
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Shared Patterns
+            </Button>
           </div>
-          <nav className="flex items-center space-x-6">
-            <Link href="/blog">
-              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
-            </Link>
-          </nav>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex mt-16">
-        {/* Sidebar */}
-        <div className="w-64 border-r bg-white">
-          <div className="p-4">
-            <TokenBalance />
-            <RewardAdmin />
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-5xl mx-auto px-8 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Your Learning Constellation</h1>
+            <p className="text-gray-600">Mapping your journey of understanding</p>
+          </div>
 
-            <Button 
-              onClick={() => navigate('/journal/new')}
-              className="w-full mb-8 mt-4"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" />
-              New Entry
+          <div className="flex gap-4 mb-8">
+            <Button variant="outline">
+              Filter
             </Button>
-
-            <div className="space-y-1">
-              <h2 className="text-sm font-medium mb-2 text-gray-500">YOUR PATTERNS</h2>
-              <Button
-                variant="ghost"
-                className="w-full justify-start bg-blue-50"
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Recent Insights
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-              >
-                <Brain className="w-4 h-4 mr-2" />
-                Learning Paths
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Shared Patterns
-              </Button>
-            </div>
+            <Button variant="outline">
+              Timeline
+            </Button>
           </div>
-        </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-5xl mx-auto px-8 py-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Your Learning Constellation</h1>
-              <p className="text-gray-600">Mapping your journey of understanding</p>
-            </div>
-
-            <div className="flex gap-4 mb-8">
-              <Button variant="outline">
-                Filter
-              </Button>
-              <Button variant="outline">
-                Timeline
-              </Button>
-            </div>
-
-            <LearningConstellation entries={entries} />
-          </div>
+          <LearningConstellation entries={entries} />
         </div>
       </div>
     </div>
