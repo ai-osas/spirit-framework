@@ -99,7 +99,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-4">
                 Personal learning pattern journal
               </p>
-              <Link href="/journal">
+              <Link href="/about-journal">
                 <Button variant="outline" className="w-full">Learn More</Button>
               </Link>
             </div>
@@ -199,7 +199,7 @@ export default function HomePage() {
               </h3>
               <ul className="mt-4 space-y-4">
                 <li>
-                  <Link href="/journal">
+                  <Link href="/about-journal">
                     <span className="text-sm text-gray-300 hover:text-white cursor-pointer">
                       Spirit Journal
                     </span>
