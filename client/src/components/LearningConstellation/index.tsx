@@ -12,9 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   entries: JournalEntry[];
+  viewMode: 'recent' | 'learning' | 'shared';
 }
 
-export function LearningConstellation({ entries }: Props) {
+export function LearningConstellation({ entries, viewMode }: Props) {
   const [_, navigate] = useLocation();
   const { account } = useWallet();
   const { toast } = useToast();
@@ -31,7 +32,7 @@ export function LearningConstellation({ entries }: Props) {
         isShared: entry.is_shared,
         creator: entry.wallet_address,
         id: entry.id,
-        inPrivateCollection: false // Will be updated based on collection status
+        inPrivateCollection: entry.inPrivateCollection || false
       }));
       return analyzeLearningPatterns(entryData);
     },
@@ -90,24 +91,37 @@ export function LearningConstellation({ entries }: Props) {
     );
   }
 
-  // Filter patterns based on toggle state
-  const displayPatterns = showAllJournals
-    ? patterns
-    : patterns.filter(pattern => pattern.creator === account);
+  // Filter patterns based on view mode
+  const displayPatterns = (() => {
+    switch (viewMode) {
+      case 'shared':
+        return patterns.filter(pattern => 
+          pattern.isShared && pattern.creator !== account
+        );
+      case 'recent':
+        return patterns.filter(pattern => 
+          pattern.creator === account || pattern.inPrivateCollection
+        );
+      default:
+        return patterns.filter(pattern => pattern.creator === account);
+    }
+  })();
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={showAllJournals}
-            onCheckedChange={setShowAllJournals}
-          />
-          <span className="text-sm text-gray-600">
-            {showAllJournals ? 'Showing All Journals' : 'Showing My Journals'}
-          </span>
+      {viewMode === 'recent' && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={showAllJournals}
+              onCheckedChange={setShowAllJournals}
+            />
+            <span className="text-sm text-gray-600">
+              {showAllJournals ? 'Showing All Journals' : 'Showing My Journals'}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-6">
         {displayPatterns.map((pattern, index) => (
@@ -128,7 +142,7 @@ export function LearningConstellation({ entries }: Props) {
                   variant="ghost"
                   size="sm"
                   onClick={() => addToPrivate.mutate(pattern.id)}
-                  disabled={addToPrivate.isPending}
+                  disabled={addToPrivate.isPending || pattern.inPrivateCollection}
                 >
                   {pattern.inPrivateCollection ? (
                     <BookmarkCheck className="w-4 h-4 text-[#B4A170]" />

@@ -9,12 +9,13 @@ import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
 import { TokenBalance } from './TokenBalance';
-import { RewardAdmin } from './RewardAdmin'; // Added import
+import { RewardAdmin } from './RewardAdmin';
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const { account, connect, isConnecting } = useWallet();
+  const [selectedView, setSelectedView] = useState<'recent' | 'learning' | 'shared'>('recent');
 
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries', account],
@@ -71,7 +72,7 @@ export default function SpiritJournal() {
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
           <TokenBalance />
-          <RewardAdmin /> {/* Added RewardAdmin component */}
+          <RewardAdmin />
 
           <Button 
             onClick={() => navigate('/journal/new')}
@@ -85,21 +86,24 @@ export default function SpiritJournal() {
             <h2 className="text-sm font-medium mb-2 text-gray-500">YOUR PATTERNS</h2>
             <Button
               variant="ghost"
-              className="w-full justify-start bg-blue-50"
+              className={`w-full justify-start ${selectedView === 'recent' ? 'bg-blue-50' : ''}`}
+              onClick={() => setSelectedView('recent')}
             >
               <Clock className="w-4 h-4 mr-2" />
               Recent Insights
             </Button>
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              className={`w-full justify-start ${selectedView === 'learning' ? 'bg-blue-50' : ''}`}
+              onClick={() => setSelectedView('learning')}
             >
               <Brain className="w-4 h-4 mr-2" />
               Learning Paths
             </Button>
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              className={`w-full justify-start ${selectedView === 'shared' ? 'bg-blue-50' : ''}`}
+              onClick={() => setSelectedView('shared')}
             >
               <Users className="w-4 h-4 mr-2" />
               Shared Patterns
@@ -112,8 +116,14 @@ export default function SpiritJournal() {
       <div className="flex-1 overflow-auto">
         <div className="max-w-5xl mx-auto px-8 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Your Learning Constellation</h1>
-            <p className="text-gray-600">Mapping your journey of understanding</p>
+            <h1 className="text-3xl font-bold mb-2">
+              {selectedView === 'shared' ? 'Shared Learning Patterns' : 'Your Learning Constellation'}
+            </h1>
+            <p className="text-gray-600">
+              {selectedView === 'shared' 
+                ? 'Discover and collect insights from the community'
+                : 'Mapping your journey of understanding'}
+            </p>
           </div>
 
           <div className="flex gap-4 mb-8">
@@ -125,7 +135,10 @@ export default function SpiritJournal() {
             </Button>
           </div>
 
-          <LearningConstellation entries={entries} />
+          <LearningConstellation 
+            entries={entries} 
+            viewMode={selectedView}
+          />
         </div>
       </div>
     </div>
