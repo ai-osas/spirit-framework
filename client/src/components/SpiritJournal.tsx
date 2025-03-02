@@ -9,20 +9,15 @@ import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
 import { TokenBalance } from './TokenBalance';
-import { RewardAdmin } from './RewardAdmin';
+import { RewardAdmin } from './RewardAdmin'; // Added import
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const { account, connect, isConnecting } = useWallet();
 
-  // Modified query to filter by wallet address
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
-    queryKey: ['/api/journal/entries', account],
-    queryFn: async () => {
-      const res = await fetch(`/api/journal/entries?wallet_address=${account}`);
-      return res.json();
-    },
+    queryKey: ['/api/journal/entries'],
     enabled: !!account,
     staleTime: 0
   });
@@ -70,8 +65,7 @@ export default function SpiritJournal() {
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
           <TokenBalance />
-
-          {/* Remove RewardAdmin from here as it should be in a separate view */}
+          <RewardAdmin /> {/* Added RewardAdmin component */}
 
           <Button 
             onClick={() => navigate('/journal/new')}
