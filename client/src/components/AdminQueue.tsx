@@ -8,21 +8,32 @@ import { Loader2 } from 'lucide-react';
 import { ethers } from 'ethers';
 import { calculateEntryReward, distributeReward } from '@/lib/rewardService';
 
+interface EntryMetrics {
+  id: number;
+  contentLength: number;
+  mediaCount: number;
+  daysSinceLastEntry: number;
+  entryStreak: number;
+  calculatedReward: string;
+  wallet_address: string;
+  created_at: string;
+}
+
 export function AdminQueue() {
   const [isProcessing, setIsProcessing] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch pending entries
-  const { data: pendingEntries } = useQuery({
-    queryKey: ['/api/journal/entries/pending'],
+  // Fetch pending reward requests with metrics only
+  const { data: pendingRewards } = useQuery<EntryMetrics[]>({
+    queryKey: ['/api/journal/rewards/pending'],
     queryFn: async () => {
-      const response = await fetch('/api/journal/entries/pending');
-      if (!response.ok) throw new Error('Failed to fetch pending entries');
-      return response.json() as Promise<JournalEntry[]>;
+      const response = await fetch('/api/journal/rewards/pending');
+      if (!response.ok) throw new Error('Failed to fetch pending rewards');
+      return response.json();
     }
   });
 
-  // Update entry status mutation
+  // Update reward status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ 
       entryId, 
@@ -38,28 +49,26 @@ export function AdminQueue() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, rewardAmount: rewardAmount?.toString() })
       });
-      if (!response.ok) throw new Error('Failed to update entry status');
+      if (!response.ok) throw new Error('Failed to update reward status');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/journal/entries/pending'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/journal/rewards/pending'] });
     }
   });
 
-  const handleApproval = async (entry: JournalEntry) => {
+  const handleApproval = async (entry: EntryMetrics) => {
     try {
       setIsProcessing(true);
-
-      // Calculate reward amount
-      const rewardAmount = await calculateEntryReward(entry);
+      const rewardAmount = BigInt(entry.calculatedReward);
 
       if (rewardAmount <= 0) {
         throw new Error('Invalid reward amount calculated');
       }
 
-      // First try to distribute the reward
+      // Distribute the reward
       await distributeReward(entry.wallet_address, rewardAmount);
 
-      // If distribution successful, update entry status
+      // Update entry status
       await updateStatusMutation.mutateAsync({
         entryId: entry.id,
         status: 'approved',
@@ -83,7 +92,7 @@ export function AdminQueue() {
     }
   };
 
-  const handleDenial = async (entry: JournalEntry) => {
+  const handleDenial = async (entry: EntryMetrics) => {
     try {
       setIsProcessing(true);
       await updateStatusMutation.mutateAsync({
@@ -92,14 +101,14 @@ export function AdminQueue() {
       });
 
       toast({
-        title: "Entry Denied",
-        description: "Successfully denied the journal entry reward"
+        title: "Reward Denied",
+        description: "Successfully denied the reward request"
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Denial Failed",
-        description: error.message || "Failed to deny entry. Please try again."
+        description: error.message || "Failed to deny reward. Please try again."
       });
     } finally {
       setIsProcessing(false);
@@ -113,13 +122,31 @@ export function AdminQueue() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {pendingEntries?.length === 0 && (
-            <p className="text-sm text-gray-500">No pending entries to review</p>
+          {!pendingRewards?.length && (
+            <p className="text-sm text-gray-500">No pending rewards to review</p>
           )}
-          {pendingEntries?.map((entry) => (
+          {pendingRewards?.map((entry) => (
             <div key={entry.id} className="border rounded-lg p-4">
-              <h3 className="font-medium">{entry.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">{entry.content.substring(0, 100)}...</p>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Entry Metrics</h4>
+                  <ul className="mt-2 space-y-1">
+                    <li className="text-sm">Content Length: {entry.contentLength} characters</li>
+                    <li className="text-sm">Media Attachments: {entry.mediaCount}</li>
+                    <li className="text-sm">Days Since Last: {entry.daysSinceLastEntry}</li>
+                    <li className="text-sm">Current Streak: {entry.entryStreak} days</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Reward Details</h4>
+                  <ul className="mt-2 space-y-1">
+                    <li className="text-sm">Calculated Amount: {ethers.formatUnits(entry.calculatedReward, 18)} SPIRIT</li>
+                    <li className="text-sm">Date: {new Date(entry.created_at).toLocaleDateString()}</li>
+                    <li className="text-sm break-all">Wallet: {entry.wallet_address}</li>
+                  </ul>
+                </div>
+              </div>
+
               <div className="flex gap-2 mt-4">
                 <Button
                   variant="outline"
