@@ -26,7 +26,8 @@ import { Editor } from './Editor';
 import { calculateEntryReward, distributeReward } from '@/lib/rewardService';
 import { toast } from '../../hooks/use-toast';
 import { EncryptionAnimation } from '../EncryptionAnimation';
-
+import { MoodSelector } from './MoodSelector';
+import type { Mood } from '@shared/schema';
 
 interface JournalEntryProps {
   id?: string;
@@ -45,6 +46,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const { account } = useWallet();
   const [showEncryption, setShowEncryption] = useState(false);
+  const [mood, setMood] = useState<Mood | null>(null);
 
   const { data: entries = [] } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries'],
@@ -101,6 +103,9 @@ export default function JournalEntry({ id }: JournalEntryProps) {
           name: m.file_type === 'image' ? 'Image' : 'Audio'
         })));
       }
+      if (entry.mood) {
+        setMood(entry.mood);
+      }
       setIsLoading(false);
     }
   }, [entry]);
@@ -119,13 +124,14 @@ export default function JournalEntry({ id }: JournalEntryProps) {
     try {
       setIsSaving(true);
       setSaveError(null);
-      setShowEncryption(true); // Show encryption animation
+      setShowEncryption(true);
 
       const entryData = {
         title,
         content,
         wallet_address: account,
         created_at: new Date(),
+        mood,
         media: media.map(m => ({
           id: m.id,
           file_type: m.type,
@@ -181,7 +187,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       setSaveError('Failed to save entry. Please try again.');
     } finally {
       setIsSaving(false);
-      setShowEncryption(false); // Hide encryption animation
+      setShowEncryption(false);
     }
   };
 
@@ -385,6 +391,14 @@ export default function JournalEntry({ id }: JournalEntryProps) {
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-4xl font-medium mb-6 bg-transparent focus:outline-none placeholder-gray-300"
             />
+
+            {/* Add MoodSelector */}
+            <div className="mb-6">
+              <MoodSelector
+                onChange={setMood}
+                initialMood={mood}
+              />
+            </div>
 
             {/* Media Grid */}
             <AnimatePresence>
