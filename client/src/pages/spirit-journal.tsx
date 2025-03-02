@@ -20,7 +20,7 @@ export default function SpiritJournalPage() {
               <Button size="lg">Start Journaling</Button>
             </Link>
             <a 
-              href="https://github.com/ai-osas/spirit-framework" 
+              href="https://github.com/spirit-framework" 
               target="_blank" 
               rel="noopener noreferrer"
             >
