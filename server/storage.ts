@@ -29,8 +29,7 @@ export class PostgresStorage implements IStorage {
     return db.select()
       .from(journalEntries)
       .where(
-        // User's own entries OR entries that are explicitly shared
-        ({ or, eq }) => or(
+        or(
           eq(journalEntries.wallet_address, wallet_address),
           eq(journalEntries.is_shared, true)
         )
@@ -105,11 +104,16 @@ export class PostgresStorage implements IStorage {
   }
 
   async updateEntrySharing(id: string, isShared: boolean): Promise<JournalEntryType> {
-    await db.update(journalEntries)
+    const [updatedEntry] = await db
+      .update(journalEntries)
       .set({ is_shared: isShared })
-      .where(eq(journalEntries.id, Number(id)));
+      .where(eq(journalEntries.id, Number(id)))
+      .returning();
 
-    return this.getEntry(id);
+    if (!updatedEntry) {
+      throw new Error("Entry not found");
+    }
+    return updatedEntry;
   }
 }
 
