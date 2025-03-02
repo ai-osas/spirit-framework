@@ -41,22 +41,39 @@ export default function ExplorePatternPage() {
 
   const toggleSharing = useMutation({
     mutationFn: async (isShared: boolean) => {
-      const response = await fetch(`/api/journal/patterns/${id}/share`, {
+      const relatedEntry = entries.find(entry => 
+        pattern.relatedConcepts.some(concept => 
+          entry.title.toLowerCase().includes(concept.toLowerCase()) ||
+          entry.content.toLowerCase().includes(concept.toLowerCase())
+        )
+      );
+
+      if (!relatedEntry) {
+        throw new Error('No matching entry found for this pattern');
+      }
+
+      const response = await fetch(`/api/journal/patterns/${relatedEntry.id}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isShared })
       });
-      if (!response.ok) throw new Error('Failed to update sharing status');
+
+      if (!response.ok) {
+        throw new Error('Failed to update sharing status');
+      }
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['learning-patterns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
       toast({
         title: "Sharing Updated",
         description: "Your learning pattern sharing preferences have been updated.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error updating sharing status:', error);
       toast({
         variant: "destructive",
         title: "Error",

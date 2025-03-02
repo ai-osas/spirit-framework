@@ -104,6 +104,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update pattern sharing endpoint
+  app.post("/api/journal/patterns/:id/share", async (req, res) => {
+    const { isShared } = req.body;
+
+    if (typeof isShared !== 'boolean') {
+      return res.status(400).json({ message: "isShared must be a boolean" });
+    }
+
+    try {
+      const updatedEntry = await storage.updateEntrySharing(req.params.id, isShared);
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error('Error updating sharing status:', error);
+      res.status(500).json({ message: "Failed to update sharing status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
