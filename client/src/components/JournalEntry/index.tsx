@@ -24,7 +24,8 @@ import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { Editor } from './Editor';
 import { calculateEntryReward, distributeReward } from '@/lib/rewardService';
-import { toast } from '../../hooks/use-toast'; // Fixed import path
+import { toast } from '../../hooks/use-toast';
+import { EncryptionAnimation } from '../EncryptionAnimation';
 
 
 interface JournalEntryProps {
@@ -43,6 +44,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const { account } = useWallet();
+  const [showEncryption, setShowEncryption] = useState(false);
 
   const { data: entries = [] } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries'],
@@ -117,6 +119,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
     try {
       setIsSaving(true);
       setSaveError(null);
+      setShowEncryption(true); // Show encryption animation
 
       const entryData = {
         title,
@@ -133,18 +136,14 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       if (id) {
         await updateEntryMutation.mutateAsync({ id, data: entryData });
       } else {
-        // First save the entry
         const savedEntry = await createEntryMutation.mutateAsync(entryData);
 
-        // Calculate reward amount but don't distribute immediately
         try {
           const previousEntry = entries[entries.length - 1];
           const rewardAmount = await calculateEntryReward(savedEntry, previousEntry);
 
-          // Only queue for reward if amount is greater than 0
           if (rewardAmount > 0) {
             try {
-              // Update entry with reward amount, status remains 'pending'
               await apiRequest('PATCH', `/api/journal/entries/${savedEntry.id}/reward`, {
                 reward_amount: rewardAmount.toString()
               });
@@ -182,6 +181,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       setSaveError('Failed to save entry. Please try again.');
     } finally {
       setIsSaving(false);
+      setShowEncryption(false); // Hide encryption animation
     }
   };
 
@@ -219,6 +219,10 @@ export default function JournalEntry({ id }: JournalEntryProps) {
 
   return (
     <div className="h-screen flex bg-gray-50">
+      <EncryptionAnimation 
+        isEncrypting={showEncryption}
+        onComplete={() => setShowEncryption(false)}
+      />
       {/* Sidebar */}
       <div className="w-80 border-r bg-white flex flex-col">
         <div className="p-4 border-b">
