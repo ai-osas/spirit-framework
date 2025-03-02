@@ -9,19 +9,17 @@ import JournalPage from "@/pages/journal";
 import NewJournalPage from "@/pages/journal/new";
 import EditJournalPage from "@/pages/journal/[id]";
 import ExplorePatternPage from "@/pages/journal/pattern/[id]";
-import AboutJournalPage from "@/pages/about-journal"; // Added import
 
 function Router() {
   const [location] = useLocation();
   const showNav = location.startsWith("/journal");
-
+  
   return (
     <div className="min-h-screen bg-background">
       {showNav && <Nav />}
       <main className={!showNav ? "" : "container mx-auto px-4 py-8"}>
         <Switch>
           <Route path="/" component={HomePage} />
-          <Route path="/about-journal" component={AboutJournalPage} /> {/* Added route */}
           <Route path="/journal" component={JournalPage} />
           <Route path="/journal/new" component={NewJournalPage} />
           <Route path="/journal/:id" component={EditJournalPage} />
