@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type JournalEntry } from '@shared/schema';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronRight, Loader2, Share2, Lock } from 'lucide-react';
 import { analyzeLearningPatterns } from '@/lib/openai';
 import { useLocation } from 'wouter';
 
@@ -13,17 +13,29 @@ interface Props {
 
 export function LearningConstellation({ entries }: Props) {
   const [_, navigate] = useLocation();
-  // Use React Query for caching the AI analysis
+
   const { data: patterns = [], isLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
     queryFn: async () => {
       const entryData = entries.map(entry => ({
         title: entry.title,
-        content: entry.content
+        content: entry.content,
+        isShared: entry.is_shared
       }));
       return analyzeLearningPatterns(entryData);
     },
     enabled: entries.length > 0,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  const { data: sharedPatterns = [] } = useQuery({
+    queryKey: ['shared-patterns'],
+    queryFn: async () => {
+      const response = await fetch('/api/journal/patterns/shared');
+      if (!response.ok) throw new Error('Failed to fetch shared patterns');
+      return response.json();
+    },
+    enabled: true,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
@@ -38,7 +50,9 @@ export function LearningConstellation({ entries }: Props) {
     );
   }
 
-  if (patterns.length === 0) {
+  const allPatterns = [...patterns, ...sharedPatterns];
+
+  if (allPatterns.length === 0) {
     return (
       <div className="grid place-items-center h-96">
         <div className="text-center max-w-md">
@@ -54,10 +68,15 @@ export function LearningConstellation({ entries }: Props) {
 
   return (
     <div className="grid grid-cols-2 gap-6">
-      {patterns.map((pattern, index) => (
+      {allPatterns.map((pattern, index) => (
         <Card key={index} className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
+              {pattern.isShared ? (
+                <Share2 className="w-4 h-4 text-blue-500" title="Shared with Community" />
+              ) : (
+                <Lock className="w-4 h-4" title="Private" />
+              )}
               <span className="text-sm text-gray-500">
                 Confidence: {Math.round(pattern.confidence * 100)}%
               </span>
