@@ -12,14 +12,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/">
-              <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto cursor-pointer" />
+              <span className="flex items-center gap-2 cursor-pointer">
+                <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto" />
+                <span className="text-lg font-semibold">Spirit Framework</span>
+              </span>
             </Link>
           </div>
-          <nav className="flex items-center space-x-6">
-            <Link href="/blog">
-              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
-            </Link>
-          </nav>
         </div>
       </header>
 
