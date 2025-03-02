@@ -32,7 +32,9 @@ export default function ExplorePatternPage() {
     queryFn: async () => {
       const entryData = entries.map(entry => ({
         title: entry.title,
-        content: entry.content
+        content: entry.content,
+        isShared: entry.is_shared,
+        creator: entry.wallet_address
       }));
       return analyzeLearningPatterns(entryData);
     },
@@ -50,6 +52,11 @@ export default function ExplorePatternPage() {
 
       if (!relatedEntry) {
         throw new Error('No matching entry found for this pattern');
+      }
+
+      // Check if the current user is the creator
+      if (relatedEntry.wallet_address !== account) {
+        throw new Error('Only the creator can modify sharing settings');
       }
 
       const response = await fetch(`/api/journal/patterns/${relatedEntry.id}/share`, {
@@ -77,7 +84,7 @@ export default function ExplorePatternPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update sharing status. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update sharing status. Please try again.",
       });
     }
   });
@@ -117,6 +124,8 @@ export default function ExplorePatternPage() {
     )
   );
 
+  const isCreator = relatedEntries.some(entry => entry.wallet_address === account);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Button
@@ -135,17 +144,23 @@ export default function ExplorePatternPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          {pattern.isShared ? <Share2 className="w-4 h-4 text-blue-500" /> : <Lock className="w-4 h-4" />}
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={pattern.isShared}
-              onCheckedChange={(checked) => toggleSharing.mutate(checked)}
-              disabled={toggleSharing.isPending}
-            />
-            <span className="text-sm text-gray-600">
-              {pattern.isShared ? 'Shared with Community' : 'Private'}
-            </span>
-          </div>
+          {pattern.isShared ? (
+            <Share2 className="w-4 h-4 text-blue-500" aria-label="Shared with Community" />
+          ) : (
+            <Lock className="w-4 h-4 text-green-500" aria-label="Private" />
+          )}
+          {isCreator && (
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={pattern.isShared}
+                onCheckedChange={(checked) => toggleSharing.mutate(checked)}
+                disabled={toggleSharing.isPending}
+              />
+              <span className="text-sm text-gray-600">
+                {pattern.isShared ? 'Shared with Community' : 'Private'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, Loader2, Share2, Lock } from 'lucide-react';
 import { analyzeLearningPatterns } from '@/lib/openai';
 import { useLocation } from 'wouter';
+import { useWallet } from '@/hooks/useWallet';
 
 interface Props {
   entries: JournalEntry[];
@@ -13,6 +14,7 @@ interface Props {
 
 export function LearningConstellation({ entries }: Props) {
   const [_, navigate] = useLocation();
+  const { account } = useWallet();
 
   const { data: patterns = [], isLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
@@ -20,7 +22,8 @@ export function LearningConstellation({ entries }: Props) {
       const entryData = entries.map(entry => ({
         title: entry.title,
         content: entry.content,
-        isShared: entry.is_shared
+        isShared: entry.is_shared,
+        creator: entry.wallet_address
       }));
       return analyzeLearningPatterns(entryData);
     },
@@ -73,9 +76,9 @@ export function LearningConstellation({ entries }: Props) {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
               {pattern.isShared ? (
-                <Share2 className="w-4 h-4 text-blue-500" title="Shared with Community" />
+                <Share2 className="w-4 h-4 text-blue-500" aria-label="Shared with Community" />
               ) : (
-                <Lock className="w-4 h-4" title="Private" />
+                <Lock className="w-4 h-4 text-green-500" aria-label="Private" />
               )}
               <span className="text-sm text-gray-500">
                 Confidence: {Math.round(pattern.confidence * 100)}%
@@ -90,11 +93,11 @@ export function LearningConstellation({ entries }: Props) {
 
           <div className="flex items-center gap-2 mb-4">
             <div className="flex -space-x-2">
-              {pattern.relatedConcepts.slice(0, 4).map((concept, i) => (
+              {pattern.relatedConcepts.slice(0, 4).map((concept: string, i: number) => (
                 <div
                   key={i}
                   className="w-6 h-6 rounded-full bg-blue-100 border border-white grid place-items-center"
-                  title={concept}
+                  aria-label={concept}
                 >
                   <span className="text-xs text-blue-700">
                     {concept.charAt(0).toUpperCase()}
