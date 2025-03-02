@@ -21,7 +21,7 @@ const SLIDES: Slide[] = [
     image: "/slides/who-its-for.svg"
   },
   {
-    title: "Problems It Solves",
+    title: "Solutions It Provides",
     description: "Traditional education's one-size-fits-all approach, unrewarded knowledge sharing, disconnected learning tools, and data-poor learning platforms.",
     image: "/slides/problems-solved.svg"
   }
