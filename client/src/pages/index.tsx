@@ -36,7 +36,7 @@ export default function HomePage() {
             <Link href="/journal">
               <Button className="gap-2">Get Started</Button>
             </Link>
-            <a href="https://github.com/spirit-framework" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/ai-osas/spirit-framework" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" className="gap-2">
                 <Github className="w-5 h-5" />
                 View on GitHub
@@ -175,7 +175,9 @@ export default function HomePage() {
               <p className="text-gray-600 mb-8">
                 Join our open source community and help build better tools.
               </p>
-              <Button variant="outline" className="w-full">View on GitHub</Button>
+              <a href="https://github.com/ai-osas/spirit-framework" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="w-full">View on GitHub</Button>
+              </a>
             </div>
           </div>
         </div>
