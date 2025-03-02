@@ -5,16 +5,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, Loader2, Brain, Users, Clock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
 import { TokenBalance } from './TokenBalance';
-import { RewardAdmin } from './RewardAdmin'; // Added import
+import { RewardAdmin } from './RewardAdmin';
 
 export default function SpiritJournal() {
   const [location, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
-  const { account, connect, isConnecting } = useWallet();
+  const [showSharedOnly, setShowSharedOnly] = useState(false);
+  const { account } = useWallet();
 
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal/entries', account],
@@ -28,32 +31,10 @@ export default function SpiritJournal() {
     staleTime: 0
   });
 
-  if (!account) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6">
-            <h1 className="text-2xl font-bold text-center mb-4">
-              Connect Your Wallet
-            </h1>
-            <p className="text-gray-600 text-center mb-6">
-              Connect your wallet to start journaling
-            </p>
-            <Button 
-              onClick={connect} 
-              className="w-full"
-              disabled={isConnecting}
-            >
-              {isConnecting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : null}
-              Connect Wallet
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Filter entries based on showSharedOnly toggle
+  const filteredEntries = entries.filter(entry => 
+    showSharedOnly ? entry.is_shared : true
+  );
 
   if (isLoading) {
     return (
@@ -71,7 +52,7 @@ export default function SpiritJournal() {
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
           <TokenBalance />
-          <RewardAdmin /> {/* Added RewardAdmin component */}
+          <RewardAdmin />
 
           <Button 
             onClick={() => navigate('/journal/new')}
@@ -100,6 +81,7 @@ export default function SpiritJournal() {
             <Button
               variant="ghost"
               className="w-full justify-start"
+              onClick={() => setShowSharedOnly(true)}
             >
               <Users className="w-4 h-4 mr-2" />
               Shared Patterns
@@ -112,8 +94,20 @@ export default function SpiritJournal() {
       <div className="flex-1 overflow-auto">
         <div className="max-w-5xl mx-auto px-8 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Your Learning Constellation</h1>
-            <p className="text-gray-600">Mapping your journey of understanding</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Your Learning Constellation</h1>
+                <p className="text-gray-600">Mapping your journey of understanding</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="shared-toggle"
+                  checked={showSharedOnly}
+                  onCheckedChange={setShowSharedOnly}
+                />
+                <Label htmlFor="shared-toggle">Show Shared Only</Label>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-4 mb-8">
@@ -125,7 +119,7 @@ export default function SpiritJournal() {
             </Button>
           </div>
 
-          <LearningConstellation entries={entries} />
+          <LearningConstellation entries={filteredEntries} />
         </div>
       </div>
     </div>
