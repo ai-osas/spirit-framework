@@ -4,7 +4,7 @@ import { useLocation, Link } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2, Brain, Users, Clock, HelpCircle } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Brain, Users, Clock } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
@@ -108,20 +108,6 @@ export default function SpiritJournal() {
               <Users className="w-4 h-4 mr-2" />
               Shared Patterns
             </Button>
-          </div>
-
-          {/* Help Section */}
-          <div className="mt-8">
-            <h2 className="text-sm font-medium mb-2 text-gray-500">HELP</h2>
-            <Link href="/faq">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-              >
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Connect Wallet FAQ
-              </Button>
-            </Link>
           </div>
         </div>
       </div>

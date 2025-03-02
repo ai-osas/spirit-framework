@@ -14,6 +14,9 @@ export function Nav() {
             <Link href="/blog">
               <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
             </Link>
+            <Link href="/faq">
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">FAQ</span>
+            </Link>
           </nav>
         </div>
       </div>
