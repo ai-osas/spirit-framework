@@ -5,7 +5,13 @@ import { insertJournalEntrySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/journal/entries", async (req, res) => {
-    const entries = await storage.getEntries();
+    const wallet_address = req.query.wallet_address as string;
+    
+    if (!wallet_address) {
+      return res.status(400).json({ message: "Wallet address is required" });
+    }
+    
+    const entries = await storage.getEntries(wallet_address);
     res.json(entries);
   });
 
@@ -80,6 +86,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(404).json({ message: "Entry not found" });
+    }
+  });
+  
+  app.patch("/api/journal/entries/:id/share", async (req, res) => {
+    const { shared } = req.body;
+    
+    if (typeof shared !== 'boolean') {
+      return res.status(400).json({ message: "Shared status must be a boolean" });
+    }
+    
+    try {
+      const entry = await storage.updateEntrySharing(req.params.id, shared);
+      res.json(entry);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update sharing status" });
     }
   });
 

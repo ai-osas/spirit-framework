@@ -17,12 +17,14 @@ export const journalEntries = pgTable("journal_entries", {
     file_type: 'image' | 'audio';
     file_url: string;
   }> | null>(),
+  is_shared: boolean("is_shared").default(false).notNull(),
 });
 
 export const insertJournalEntrySchema = createInsertSchema(journalEntries)
   .omit({ id: true, created_at: true, reward_status: true, reward_amount: true, distributed_at: true })
   .extend({
-    media: z.array(mediaSchema).nullable()
+    media: z.array(mediaSchema).nullable(),
+    is_shared: z.boolean().default(false).optional()
   });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

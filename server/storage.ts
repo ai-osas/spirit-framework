@@ -1,5 +1,5 @@
 import { type JournalEntry, type InsertJournalEntry } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { type JournalEntry as JournalEntryType, type InsertJournalEntry as InsertJournalEntryType, journalEntries } from "@shared/schema";
@@ -12,7 +12,7 @@ const client = postgres(process.env.DATABASE_URL);
 const db = drizzle(client);
 
 export interface IStorage {
-  getEntries(): Promise<JournalEntry[]>;
+  getEntries(wallet_address: string): Promise<JournalEntry[]>;
   getEntry(id: string): Promise<JournalEntry | undefined>;
   createEntry(entry: InsertJournalEntry): Promise<JournalEntry>;
   updateEntry(id: string, entry: InsertJournalEntry): Promise<JournalEntry>;
@@ -20,11 +20,22 @@ export interface IStorage {
   getPendingEntries(): Promise<JournalEntry[]>;
   updateEntryStatus(id: string, status: 'approved' | 'denied', rewardAmount?: string): Promise<void>;
   updateEntryReward(id: string, rewardAmount: string): Promise<void>;
+  updateEntrySharing(id: string, isShared: boolean): Promise<JournalEntryType>;
 }
 
 export class PostgresStorage implements IStorage {
-  async getEntries(): Promise<JournalEntry[]> {
-    return await db.select().from(journalEntries);
+  async getEntries(wallet_address: string): Promise<JournalEntry[]> {
+    // Return user's own entries and entries shared by others
+    return db.select()
+      .from(journalEntries)
+      .where(
+        // User's own entries OR entries that are explicitly shared
+        ({ or, eq }) => or(
+          eq(journalEntries.wallet_address, wallet_address),
+          eq(journalEntries.is_shared, true)
+        )
+      )
+      .orderBy(journalEntries.created_at, "desc");
   }
 
   async getEntry(id: string): Promise<JournalEntry | undefined> {
@@ -65,7 +76,7 @@ export class PostgresStorage implements IStorage {
   async deleteEntry(id: string): Promise<void> {
     await db
       .delete(journalEntries)
-      .where(eq(journalEntries.id, parseInt(id)));
+      .where(eq(journalEntries.id, Number(id)));
   }
 
   async getPendingEntries(): Promise<JournalEntry[]> {
@@ -91,6 +102,14 @@ export class PostgresStorage implements IStorage {
       .update(journalEntries)
       .set({ reward_amount: rewardAmount })
       .where(eq(journalEntries.id, parseInt(id)));
+  }
+
+  async updateEntrySharing(id: string, isShared: boolean): Promise<JournalEntryType> {
+    await db.update(journalEntries)
+      .set({ is_shared: isShared })
+      .where(eq(journalEntries.id, Number(id)));
+
+    return this.getEntry(id);
   }
 }
 

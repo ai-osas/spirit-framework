@@ -17,7 +17,13 @@ export default function SpiritJournal() {
   const { account, connect, isConnecting } = useWallet();
 
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
-    queryKey: ['/api/journal/entries'],
+    queryKey: ['/api/journal/entries', account],
+    queryFn: async () => {
+      if (!account) return [];
+      const response = await fetch(`/api/journal/entries?wallet_address=${account}`);
+      if (!response.ok) throw new Error('Failed to fetch entries');
+      return response.json();
+    },
     enabled: !!account,
     staleTime: 0
   });

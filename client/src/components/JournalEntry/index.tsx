@@ -228,14 +228,48 @@ export default function JournalEntry({ id }: JournalEntryProps) {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Journal</h2>
-            <button 
-              onClick={saveEntry}
-              disabled={isSaving}
-              className="text-blue-500 disabled:opacity-50 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors flex items-center gap-2"
-            >
-              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {id ? 'Save Changes' : 'Save'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={saveEntry}
+                disabled={isSaving}
+                className="text-blue-500 disabled:opacity-50 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors flex items-center gap-2"
+              >
+                {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {id ? 'Save Changes' : 'Save'}
+              </button>
+              {entry && (
+                <div className="flex items-center gap-1 text-sm">
+                  <input
+                    type="checkbox"
+                    id="share-toggle"
+                    checked={entry.is_shared || false}
+                    onChange={async (e) => {
+                      try {
+                        await fetch(`/api/journal/entries/${entry.id}/share`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ shared: e.target.checked })
+                        });
+                        queryClient.invalidateQueries(['/api/journal/entries']);
+                        toast({
+                          title: e.target.checked ? 'Entry shared' : 'Entry privacy restored',
+                          description: e.target.checked 
+                            ? 'This entry is now visible to other users' 
+                            : 'This entry is now private',
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Error',
+                          description: 'Failed to update sharing status',
+                          variant: 'destructive'
+                        });
+                      }
+                    }}
+                  />
+                  <label htmlFor="share-toggle">Share publicly</label>
+                </div>
+              )}
+            </div>
           </div>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
