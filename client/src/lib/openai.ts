@@ -11,9 +11,19 @@ interface LearningPattern {
   description: string;
   relatedConcepts: string[];
   confidence: number;
+  isShared: boolean;
+  creator: string;
+  id: number;
+  inPrivateCollection?: boolean;
 }
 
-export async function analyzeLearningPatterns(entries: { title: string; content: string }[]): Promise<LearningPattern[]> {
+export async function analyzeLearningPatterns(entries: { 
+  title: string; 
+  content: string;
+  isShared: boolean;
+  creator: string;
+  id: number;
+}[]): Promise<LearningPattern[]> {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -61,7 +71,11 @@ Respond with JSON in this format:
       "topic": "Main topic or concept being learned",
       "description": "Description of the learning pattern, evidence of understanding, and key insights",
       "relatedConcepts": ["list", "of", "related", "concepts"],
-      "confidence": 0.95
+      "confidence": 0.95,
+      "isShared": false,
+      "creator": "wallet_address",
+      "id": 1,
+      "inPrivateCollection": false
     }
   ]
 }
@@ -73,7 +87,15 @@ Only include entries where you have high confidence (>0.7) that they represent a
     });
 
     const result = JSON.parse(response.choices[0].message.content || '{"patterns": []}');
-    return result.patterns;
+
+    // Map the entries metadata to the patterns
+    return result.patterns.map((pattern: LearningPattern, index: number) => ({
+      ...pattern,
+      isShared: entries[index]?.isShared || false,
+      creator: entries[index]?.creator || '',
+      id: entries[index]?.id || 0,
+      inPrivateCollection: false // This will be updated based on the collection status
+    }));
   } catch (error) {
     console.error('Failed to analyze learning patterns:', error);
     return [];

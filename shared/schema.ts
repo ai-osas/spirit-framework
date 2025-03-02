@@ -2,6 +2,7 @@ import { pgTable, text, serial, timestamp, json, boolean } from "drizzle-orm/pg-
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { mediaSchema } from "../client/src/types/journal";
+import { relations } from "drizzle-orm";
 
 export const journalEntries = pgTable("journal_entries", {
   id: serial("id").primaryKey(),
@@ -20,6 +21,24 @@ export const journalEntries = pgTable("journal_entries", {
   is_shared: boolean("is_shared").default(false).notNull(),
 });
 
+export const journalCollections = pgTable("journal_collections", {
+  entry_id: serial("entry_id").references(() => journalEntries.id),
+  collector_wallet_address: text("collector_wallet_address").notNull(),
+  collected_at: timestamp("collected_at").defaultNow().notNull(),
+});
+
+// Create relations between tables
+export const journalEntriesRelations = relations(journalEntries, ({ many }) => ({
+  collections: many(journalCollections),
+}));
+
+export const journalCollectionsRelations = relations(journalCollections, ({ one }) => ({
+  entry: one(journalEntries, {
+    fields: [journalCollections.entry_id],
+    references: [journalEntries.id],
+  }),
+}));
+
 export const insertJournalEntrySchema = createInsertSchema(journalEntries)
   .omit({ id: true, created_at: true, reward_status: true, reward_amount: true, distributed_at: true })
   .extend({
@@ -29,3 +48,4 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntries)
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type JournalEntry = typeof journalEntries.$inferSelect;
+export type JournalCollection = typeof journalCollections.$inferSelect;

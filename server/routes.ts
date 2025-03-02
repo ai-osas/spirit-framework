@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).json({ message: "Entry not found" });
     }
   });
-  
+
   app.patch("/api/journal/entries/:id/share", async (req, res) => {
     const { shared } = req.body;
     
@@ -118,6 +118,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating sharing status:', error);
       res.status(500).json({ message: "Failed to update sharing status" });
+    }
+  });
+
+  // Add new routes for collection management
+  app.post("/api/journal/entries/:id/collect", async (req, res) => {
+    const entryId = parseInt(req.params.id);
+    const collectorWalletAddress = req.query.wallet_address as string;
+
+    if (!collectorWalletAddress) {
+      return res.status(400).json({ message: "Wallet address is required" });
+    }
+
+    try {
+      await storage.addToPrivateCollection(entryId, collectorWalletAddress);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error adding to private collection:', error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to add to private collection" 
+      });
+    }
+  });
+
+  app.delete("/api/journal/entries/:id/collect", async (req, res) => {
+    const entryId = parseInt(req.params.id);
+    const collectorWalletAddress = req.query.wallet_address as string;
+
+    if (!collectorWalletAddress) {
+      return res.status(400).json({ message: "Wallet address is required" });
+    }
+
+    try {
+      await storage.removeFromPrivateCollection(entryId, collectorWalletAddress);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing from private collection:', error);
+      res.status(500).json({ message: "Failed to remove from private collection" });
     }
   });
 
