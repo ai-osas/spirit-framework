@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Brain, Code, Database, Network, Shield, Coins } from "lucide-react";
+import { SiGithub } from "react-icons/si";
 
 export default function SpiritJournalPage() {
   return (
@@ -14,9 +15,25 @@ export default function SpiritJournalPage() {
           <p className="text-xl text-gray-600 mb-8 max-w-3xl">
             More than just a journal - Spirit Journal is a pioneering platform that transforms your learning experiences into personalized intelligence, helping build smarter educational tools for everyone.
           </p>
-          <Link href="/journal">
-            <Button size="lg">Start Journaling</Button>
-          </Link>
+          <div className="flex gap-4">
+            <Link href="/journal">
+              <Button size="lg">Start Journaling</Button>
+            </Link>
+            <a 
+              href="https://github.com/ai-osas/spirit-framework" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="flex items-center gap-2"
+              >
+                <SiGithub className="w-5 h-5" />
+                View on GitHub
+              </Button>
+            </a>
+          </div>
         </div>
       </div>
 
