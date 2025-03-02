@@ -7,10 +7,10 @@ export default function FAQPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link href="/journal">
+        <Link href="/">
           <Button variant="ghost" className="mb-8">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Journal
+            Back to Home
           </Button>
         </Link>
 
