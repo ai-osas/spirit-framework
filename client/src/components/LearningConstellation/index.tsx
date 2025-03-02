@@ -31,17 +31,6 @@ export function LearningConstellation({ entries }: Props) {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  const { data: sharedPatterns = [] } = useQuery({
-    queryKey: ['shared-patterns'],
-    queryFn: async () => {
-      const response = await fetch('/api/journal/patterns/shared');
-      if (!response.ok) throw new Error('Failed to fetch shared patterns');
-      return response.json();
-    },
-    enabled: true,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
   if (isLoading) {
     return (
       <div className="grid place-items-center h-96">
@@ -53,9 +42,7 @@ export function LearningConstellation({ entries }: Props) {
     );
   }
 
-  const allPatterns = [...patterns, ...sharedPatterns];
-
-  if (allPatterns.length === 0) {
+  if (patterns.length === 0) {
     return (
       <div className="grid place-items-center h-96">
         <div className="text-center max-w-md">
@@ -71,14 +58,14 @@ export function LearningConstellation({ entries }: Props) {
 
   return (
     <div className="grid grid-cols-2 gap-6">
-      {allPatterns.map((pattern, index) => (
+      {patterns.map((pattern, index) => (
         <Card key={index} className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
               {pattern.isShared ? (
-                <Share2 className="w-4 h-4 text-blue-500" aria-label="Shared with Community" />
+                <Share2 className="w-4 h-4 text-green-500" aria-label="Shared with Community" />
               ) : (
-                <Lock className="w-4 h-4 text-green-500" aria-label="Private" />
+                <Lock className="w-4 h-4 text-[#B4A170]" aria-label="Private" />
               )}
               <span className="text-sm text-gray-500">
                 Confidence: {Math.round(pattern.confidence * 100)}%

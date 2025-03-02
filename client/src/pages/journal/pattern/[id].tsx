@@ -43,8 +43,8 @@ export default function ExplorePatternPage() {
 
   const toggleSharing = useMutation({
     mutationFn: async (isShared: boolean) => {
-      const relatedEntry = entries.find(entry => 
-        pattern.relatedConcepts.some(concept => 
+      const relatedEntry = entries.find(entry =>
+        pattern.relatedConcepts.some(concept =>
           entry.title.toLowerCase().includes(concept.toLowerCase()) ||
           entry.content.toLowerCase().includes(concept.toLowerCase())
         )
@@ -117,8 +117,8 @@ export default function ExplorePatternPage() {
     );
   }
 
-  const relatedEntries = entries.filter(entry => 
-    pattern.relatedConcepts.some(concept => 
+  const relatedEntries = entries.filter(entry =>
+    pattern.relatedConcepts.some(concept =>
       entry.title.toLowerCase().includes(concept.toLowerCase()) ||
       entry.content.toLowerCase().includes(concept.toLowerCase())
     )
@@ -145,9 +145,9 @@ export default function ExplorePatternPage() {
 
         <div className="flex items-center gap-4">
           {pattern.isShared ? (
-            <Share2 className="w-4 h-4 text-blue-500" aria-label="Shared with Community" />
+            <Share2 className="w-4 h-4 text-green-500" aria-label="Shared with Community" />
           ) : (
-            <Lock className="w-4 h-4 text-green-500" aria-label="Private" />
+            <Lock className="w-4 h-4 text-[#B4A170]" aria-label="Private" />
           )}
           {isCreator && (
             <div className="flex items-center gap-2">
