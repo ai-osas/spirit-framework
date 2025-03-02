@@ -1,0 +1,9 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#F3F4F6"/>
+  <path d="M300,200 L500,200 L500,400 L300,400 Z" fill="#F59E0B" opacity="0.2"/>
+  <path d="M350,250 L450,250 L450,350 L350,350 Z" fill="#F59E0B" opacity="0.4"/>
+  <path d="M375,275 L425,275 L425,325 L375,325 Z" fill="#F59E0B"/>
+  <text x="400" y="300" font-family="system-ui" font-size="24" fill="#92400E" text-anchor="middle">
+    Solving Education Challenges
+  </text>
+</svg>

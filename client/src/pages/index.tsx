@@ -1,8 +1,9 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Github, Heart, Coffee } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Github,  Coffee } from 'lucide-react';
 import { Brain, Code, Users } from "lucide-react";
+import { HeroCarousel } from '@/components/HeroCarousel';
 
 export default function HomePage() {
   return (
@@ -27,24 +28,31 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <div className="bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Spirit Framework
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Mapping the constellations between code, stories, and human potential
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link href="/journal">
-              <Button className="gap-2">Get Started</Button>
-            </Link>
-            <a href="https://github.com/ai-osas/spirit-framework" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="gap-2">
-                <Github className="w-5 h-5" />
-                View on GitHub
-              </Button>
-            </a>
+      <div className="bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto pt-12 pb-24">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+              Spirit Framework
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Mapping the constellations between code, stories, and human potential
+            </p>
+            <div className="flex justify-center gap-4">
+              <Link href="/journal">
+                <Button className="gap-2">Get Started</Button>
+              </Link>
+              <a href="https://github.com/ai-osas/spirit-framework" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="gap-2">
+                  <Github className="w-5 h-5" />
+                  View on GitHub
+                </Button>
+              </a>
+            </div>
+          </div>
+
+          {/* Hero Carousel */}
+          <div className="max-w-5xl mx-auto">
+            <HeroCarousel />
           </div>
         </div>
       </div>
