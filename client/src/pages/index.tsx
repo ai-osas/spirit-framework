@@ -15,6 +15,11 @@ export default function HomePage() {
               <img src="/spirit-logo.svg" alt="Spirit" className="h-8 w-auto cursor-pointer" />
             </Link>
           </div>
+          <nav className="flex items-center space-x-6">
+            <Link href="/blog">
+              <span className="text-gray-700 hover:text-gray-900 cursor-pointer">Blog</span>
+            </Link>
+          </nav>
         </div>
       </header>
 
