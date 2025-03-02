@@ -5,16 +5,25 @@ import { ChevronLeft, Loader2 } from 'lucide-react';
 import { type JournalEntry } from '@shared/schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { analyzeLearningPatterns } from '@/lib/openai';
+import { useWallet } from '@/hooks/useWallet';
 
 export default function ExplorePatternPage() {
   const { id } = useParams();
   const [_, navigate] = useLocation();
+  const { account } = useWallet();
 
-  const { data: entries = [] } = useQuery<JournalEntry[]>({
-    queryKey: ['/api/journal/entries'],
+  const { data: entries = [], isLoading: entriesLoading } = useQuery<JournalEntry[]>({
+    queryKey: ['/api/journal/entries', account],
+    queryFn: async () => {
+      if (!account) return [];
+      const response = await fetch(`/api/journal/entries?wallet_address=${account}`);
+      if (!response.ok) throw new Error('Failed to fetch entries');
+      return response.json();
+    },
+    enabled: !!account,
   });
 
-  const { data: patterns = [], isLoading } = useQuery({
+  const { data: patterns = [], isLoading: patternsLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
     queryFn: async () => {
       const entryData = entries.map(entry => ({
@@ -26,14 +35,28 @@ export default function ExplorePatternPage() {
     enabled: entries.length > 0,
   });
 
+  const isLoading = entriesLoading || patternsLoading;
+
+  // Find the pattern by index
   const pattern = patterns[Number(id) - 1];
+
+  if (isLoading) {
+    return (
+      <div className="grid place-items-center h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <p className="text-gray-600">Analyzing learning patterns...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!pattern) {
     return (
       <div className="grid place-items-center h-screen">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Pattern Not Found</h2>
-          <p className="text-gray-600 mb-4">This learning pattern does not exist.</p>
+          <p className="text-gray-600 mb-4">This learning pattern could not be found.</p>
           <Button onClick={() => navigate('/journal')}>
             Return to Journal
           </Button>
@@ -42,13 +65,13 @@ export default function ExplorePatternPage() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="grid place-items-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
+  // Filter entries that contributed to this pattern based on content matching
+  const relatedEntries = entries.filter(entry => 
+    pattern.relatedConcepts.some(concept => 
+      entry.title.toLowerCase().includes(concept.toLowerCase()) ||
+      entry.content.toLowerCase().includes(concept.toLowerCase())
+    )
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -90,7 +113,7 @@ export default function ExplorePatternPage() {
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4">Contributing Entries</h2>
             <div className="space-y-4">
-              {entries.slice(0, 3).map((entry) => (
+              {relatedEntries.map((entry) => (
                 <div key={entry.id} className="p-4 rounded-lg border">
                   <h3 className="font-medium mb-2">{entry.title}</h3>
                   <p className="text-gray-600 text-sm line-clamp-2">
