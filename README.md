@@ -45,7 +45,7 @@ ANKR_API_KEY=your_ankr_api_key
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/spirit-framework.git
+git clone https://github.com/ai-osas/spirit-framework.git
 cd spirit-framework
 ```
 
