@@ -26,6 +26,17 @@ export default function ExplorePatternPage() {
     },
     enabled: !!account,
   });
+  
+  // Define relatedEntries based on pattern concepts
+  const relatedEntries = React.useMemo(() => {
+    if (!pattern || !entries.length) return [];
+    return entries.filter(entry => 
+      pattern.relatedConcepts?.some(concept => 
+        entry.title.toLowerCase().includes(concept.toLowerCase()) || 
+        entry.content.toLowerCase().includes(concept.toLowerCase())
+      )
+    );
+  }, [pattern, entries]);
 
   const { data: patterns = [], isLoading: patternsLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
@@ -42,27 +53,19 @@ export default function ExplorePatternPage() {
   });
 
   const toggleSharing = useMutation({
-    mutationFn: async (isShared: boolean, patternId: number) => {
-      const relatedEntry = entries.find(entry =>
-        pattern.relatedConcepts.some(concept =>
-          entry.title.toLowerCase().includes(concept.toLowerCase()) ||
-          entry.content.toLowerCase().includes(concept.toLowerCase())
-        )
+    mutationFn: async (checked: boolean) => {
+      const relatedEntry = relatedEntries.find(entry => 
+        entry.wallet_address === account
       );
 
       if (!relatedEntry) {
         throw new Error('No matching entry found for this pattern');
       }
 
-      // Check if the current user is the creator
-      if (relatedEntry.wallet_address !== account) {
-        throw new Error('Only the creator can modify sharing settings');
-      }
-
-      const response = await fetch(`/api/journal/patterns/${patternId}/share`, {
+      const response = await fetch(`/api/journal/patterns/${id}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isShared })
+        body: JSON.stringify({ isShared: checked })
       });
 
       if (!response.ok) {
@@ -154,7 +157,7 @@ export default function ExplorePatternPage() {
             <div className="flex items-center gap-2">
               <Switch
                 checked={pattern.isShared}
-                onCheckedChange={(checked) => toggleSharing.mutate(checked, pattern.id)}
+                onCheckedChange={(checked) => toggleSharing.mutate(checked)}
                 disabled={toggleSharing.isPending}
               />
               <span className="text-sm text-gray-600">
