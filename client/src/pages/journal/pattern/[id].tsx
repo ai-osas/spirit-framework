@@ -1,29 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { ChevronLeft, ChevronRight, Loader2, Lock, Share2 } from 'lucide-react';
+import { ChevronLeft, Loader2, Lock, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { analyzeLearningPatterns } from '@/lib/openai';
-import { useToast } from '@/components/ui/use-toast';
-import { useWallet } from '@/components/providers/WalletProvider';
-import { JournalEntry } from '@/types';
+import { useToast } from '@/hooks/use-toast'; // Fixed import path
+import { useWallet } from '@/hooks/useWallet'; // Fixed import path
+import { JournalEntry } from '@shared/schema';
 
 export default function PatternPage() {
   const [_, navigate] = useLocation();
-  const id = location.pathname.split('/').pop();
+  const id = window.location.pathname.split('/').pop();
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: entries = [], isLoading: entriesLoading } = useQuery<JournalEntry[]>({
-    queryKey: ['/api/journal/entries', account],
+  const { data: entries = [], isLoading: entriesLoading } = useQuery({
+    queryKey: ['journal-entries'],
     queryFn: async () => {
-      if (!account) return [];
-      const response = await fetch(`/api/journal/entries?wallet_address=${account}`);
-      if (!response.ok) throw new Error('Failed to fetch entries');
+      const response = await fetch('/api/journal');
+      if (!response.ok) {
+        throw new Error('Failed to fetch journal entries');
+      }
       return response.json();
     },
     enabled: !!account,
@@ -44,6 +45,17 @@ export default function PatternPage() {
     enabled: entries.length > 0,
   });
 
+  // Find the current pattern
+  const pattern = patterns.find(p => p.id.toString() === id);
+
+  // Find entries that are related to this pattern
+  const relatedEntries = entries.filter(entry => 
+    pattern?.relatedConcepts?.some(concept => 
+      entry.title.toLowerCase().includes(concept.toLowerCase()) || 
+      entry.content.toLowerCase().includes(concept.toLowerCase())
+    )
+  );
+
   const toggleSharing = useMutation({
     mutationFn: async (checked: boolean) => {
       if (!pattern) {
@@ -53,15 +65,15 @@ export default function PatternPage() {
       const relatedEntry = relatedEntries.find(entry => 
         entry.wallet_address === account
       );
-
+      
       if (!relatedEntry) {
-        throw new Error('No matching entry found for this pattern');
+        throw new Error('No entries found that you can share');
       }
 
-      const response = await fetch(`/api/journal/patterns/${id}/share`, {
-        method: 'POST',
+      const response = await fetch(`/api/journal/${relatedEntry.id}/share`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isShared: checked })
+        body: JSON.stringify({ is_shared: checked }),
       });
 
       if (!response.ok) {
@@ -71,142 +83,134 @@ export default function PatternPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-patterns'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
       toast({
-        title: "Sharing Updated",
-        description: "Your learning pattern sharing preferences have been updated.",
+        title: 'Sharing updated',
+        description: 'Your journal sharing preferences have been updated.',
       });
     },
     onError: (error) => {
-      console.error('Error updating sharing status:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update sharing status. Please try again.",
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  const isLoading = entriesLoading || patternsLoading;
-  const pattern = patterns[Number(id) - 1];
+  // Check if the user has any entries related to this pattern
+  const userHasRelatedEntries = relatedEntries.some(entry => entry.wallet_address === account);
+  
+  // Determine if the user's related entry is shared
+  const isUserEntryShared = relatedEntries.find(
+    entry => entry.wallet_address === account
+  )?.is_shared || false;
 
-  if (isLoading) {
+  if (entriesLoading || patternsLoading) {
     return (
-      <div className="grid place-items-center h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          <p className="text-gray-600">Analyzing learning patterns...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading pattern insights...</p>
       </div>
     );
   }
 
   if (!pattern) {
     return (
-      <div className="grid place-items-center h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Pattern Not Found</h2>
-          <p className="text-gray-600 mb-4">This learning pattern could not be found.</p>
+          <h2 className="text-2xl font-bold mb-2">Pattern not found</h2>
+          <p className="text-muted-foreground mb-4">
+            The learning pattern you're looking for doesn't exist.
+          </p>
           <Button onClick={() => navigate('/journal')}>
-            Return to Journal
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Journal
           </Button>
         </div>
       </div>
     );
   }
 
-  const relatedEntries = entries.filter(entry =>
-    pattern.relatedConcepts.some(concept =>
-      entry.title.toLowerCase().includes(concept.toLowerCase()) ||
-      entry.content.toLowerCase().includes(concept.toLowerCase())
-    )
-  );
-
-  const isCreator = relatedEntries.some(entry => entry.wallet_address === account);
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="mb-6"
-        onClick={() => navigate('/journal')}
-      >
-        <ChevronLeft className="w-4 h-4 mr-2" />
-        Back to Learning Constellation
-      </Button>
+    <div className="container max-w-4xl mx-auto py-8 px-4">
+      <div className="mb-8">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/journal')}
+          className="mb-4"
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Journal
+        </Button>
 
-      <div className="mb-8 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{pattern.topic}</h1>
-          <p className="text-gray-600">{pattern.description}</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {pattern.isShared ? (
-            <Share2 className="w-4 h-4 text-green-500" aria-label="Shared with Community" />
-          ) : (
-            <Lock className="w-4 h-4 text-[#B4A170]" aria-label="Private" />
-          )}
-          {/* Allow all users who created related entries to control sharing */}
-          {relatedEntries.some(entry => entry.wallet_address === account) && (
-            <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">{pattern.topic}</h1>
+          
+          {userHasRelatedEntries && (
+            <div className="flex items-center space-x-2">
+              {isUserEntryShared ? (
+                <Share2 className="h-4 w-4 text-primary" />
+              ) : (
+                <Lock className="h-4 w-4 text-muted-foreground" />
+              )}
               <Switch
-                checked={pattern.isShared}
+                checked={isUserEntryShared}
                 onCheckedChange={(checked) => toggleSharing.mutate(checked)}
                 disabled={toggleSharing.isPending}
               />
-              <span className="text-sm text-gray-600">
-                {pattern.isShared ? 'Shared with Community' : 'Private'}
+              <span className="text-sm font-medium">
+                {isUserEntryShared ? 'Shared' : 'Private'}
               </span>
             </div>
           )}
         </div>
+        
+        <p className="text-lg text-muted-foreground mt-2">{pattern.description}</p>
+        
+        <div className="flex flex-wrap gap-2 mt-4">
+          {pattern.relatedConcepts.map((concept, index) => (
+            <span
+              key={index}
+              className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+            >
+              {concept}
+            </span>
+          ))}
+        </div>
       </div>
 
-      <div className="grid gap-8">
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Related Concepts</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {pattern.relatedConcepts.map((concept, index) => (
-                <div
-                  key={index}
-                  className="p-4 rounded-lg bg-blue-50 border border-blue-100"
-                >
-                  <h3 className="font-medium text-blue-900">{concept}</h3>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Connected to {pattern.topic}
-                  </p>
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Related Journal Entries</h2>
+        
+        {relatedEntries.length === 0 ? (
+          <p className="text-muted-foreground">No related entries found.</p>
+        ) : (
+          relatedEntries.map((entry) => (
+            <Card key={entry.id} className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">{entry.title}</h3>
+                  <div className="flex items-center">
+                    {entry.is_shared ? (
+                      <Share2 className="h-4 w-4 text-primary mr-2" />
+                    ) : (
+                      <Lock className="h-4 w-4 text-muted-foreground mr-2" />
+                    )}
+                    <span className="text-sm text-muted-foreground">
+                      {entry.wallet_address === account
+                        ? 'You'
+                        : `${entry.wallet_address.slice(0, 6)}...${entry.wallet_address.slice(-4)}`}
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Contributing Entries</h2>
-            <div className="space-y-4">
-              {relatedEntries.map((entry) => (
-                <div key={entry.id} className="p-4 rounded-lg border">
-                  <h3 className="font-medium mb-2">{entry.title}</h3>
-                  <p className="text-gray-600 text-sm line-clamp-2">
-                    {entry.content}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => navigate(`/journal/${entry.id}`)}
-                  >
-                    View Entry
-                  </Button>
+                
+                <div className="prose prose-sm max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: entry.content }} />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
