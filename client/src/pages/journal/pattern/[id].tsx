@@ -1,17 +1,19 @@
-import { useParams, useLocation } from 'wouter';
+
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { ChevronLeft, ChevronRight, Loader2, Lock, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Loader2, Share2, Lock } from 'lucide-react';
-import { type JournalEntry } from '@shared/schema';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { analyzeLearningPatterns } from '@/lib/openai';
-import { useWallet } from '@/hooks/useWallet';
-import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useWallet } from '@/components/providers/WalletProvider';
+import { JournalEntry } from '@/types';
 
-export default function ExplorePatternPage() {
-  const { id } = useParams();
+export default function PatternPage() {
   const [_, navigate] = useLocation();
+  const id = location.pathname.split('/').pop();
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -26,17 +28,6 @@ export default function ExplorePatternPage() {
     },
     enabled: !!account,
   });
-  
-  // Define relatedEntries based on pattern concepts
-  const relatedEntries = React.useMemo(() => {
-    if (!pattern || !entries.length) return [];
-    return entries.filter(entry => 
-      pattern.relatedConcepts?.some(concept => 
-        entry.title.toLowerCase().includes(concept.toLowerCase()) || 
-        entry.content.toLowerCase().includes(concept.toLowerCase())
-      )
-    );
-  }, [pattern, entries]);
 
   const { data: patterns = [], isLoading: patternsLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
@@ -45,7 +36,8 @@ export default function ExplorePatternPage() {
         title: entry.title,
         content: entry.content,
         isShared: entry.is_shared,
-        creator: entry.wallet_address
+        creator: entry.wallet_address,
+        id: entry.id
       }));
       return analyzeLearningPatterns(entryData);
     },
@@ -54,6 +46,10 @@ export default function ExplorePatternPage() {
 
   const toggleSharing = useMutation({
     mutationFn: async (checked: boolean) => {
+      if (!pattern) {
+        throw new Error('Pattern not found');
+      }
+      
       const relatedEntry = relatedEntries.find(entry => 
         entry.wallet_address === account
       );
