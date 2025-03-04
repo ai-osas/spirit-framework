@@ -42,7 +42,7 @@ export default function ExplorePatternPage() {
   });
 
   const toggleSharing = useMutation({
-    mutationFn: async (isShared: boolean) => {
+    mutationFn: async (isShared: boolean, patternId: number) => {
       const relatedEntry = entries.find(entry =>
         pattern.relatedConcepts.some(concept =>
           entry.title.toLowerCase().includes(concept.toLowerCase()) ||
@@ -59,7 +59,7 @@ export default function ExplorePatternPage() {
         throw new Error('Only the creator can modify sharing settings');
       }
 
-      const response = await fetch(`/api/journal/patterns/${relatedEntry.id}/share`, {
+      const response = await fetch(`/api/journal/patterns/${patternId}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isShared })
@@ -149,11 +149,12 @@ export default function ExplorePatternPage() {
           ) : (
             <Lock className="w-4 h-4 text-[#B4A170]" aria-label="Private" />
           )}
-          {isCreator && (
+          {/* Allow all users who created related entries to control sharing */}
+          {relatedEntries.some(entry => entry.wallet_address === account) && (
             <div className="flex items-center gap-2">
               <Switch
                 checked={pattern.isShared}
-                onCheckedChange={(checked) => toggleSharing.mutate(checked)}
+                onCheckedChange={(checked) => toggleSharing.mutate(checked, pattern.id)}
                 disabled={toggleSharing.isPending}
               />
               <span className="text-sm text-gray-600">

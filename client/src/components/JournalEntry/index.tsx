@@ -290,7 +290,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
             />
           </div>
         </div>
-        
+
 
         <div className="flex-1 overflow-y-auto">
           <button 
