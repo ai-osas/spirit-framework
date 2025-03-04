@@ -232,8 +232,8 @@ export default function JournalEntry({ id }: JournalEntryProps) {
       {/* Sidebar */}
       <div className="w-80 border-r bg-white flex flex-col">
         <div className="p-4 border-b">
+          {/* Save and Share Controls */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Journal</h2>
             <div className="flex items-center gap-2">
               <button 
                 onClick={saveEntry}
@@ -243,17 +243,19 @@ export default function JournalEntry({ id }: JournalEntryProps) {
                 {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {id ? 'Save Changes' : 'Save'}
               </button>
-              {entry && (
-                <div className="flex items-center gap-1 text-sm">
+            </div>
+            {/* Show sharing toggle for entry owner */}
+            {entry && entry.wallet_address === account && (
+              <div className="flex items-center gap-2 text-sm">
+                <label htmlFor="share-toggle" className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     id="share-toggle"
                     checked={entry.is_shared || false}
                     onChange={async (e) => {
                       try {
-                        await apiRequest(`/api/journal/entries/${entry.id}/share`, {
-                          method: 'PATCH',
-                          body: JSON.stringify({ shared: e.target.checked })
+                        await apiRequest('PATCH', `/api/journal/entries/${entry.id}/share`, {
+                          shared: e.target.checked
                         });
                         queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
                         toast({
@@ -270,11 +272,12 @@ export default function JournalEntry({ id }: JournalEntryProps) {
                         });
                       }
                     }}
+                    className="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                   />
-                  <label htmlFor="share-toggle">Share publicly</label>
-                </div>
-              )}
-            </div>
+                  <span>Share publicly</span>
+                </label>
+              </div>
+            )}
           </div>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
