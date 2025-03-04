@@ -251,12 +251,11 @@ export default function JournalEntry({ id }: JournalEntryProps) {
                     checked={entry.is_shared || false}
                     onChange={async (e) => {
                       try {
-                        await fetch(`/api/journal/entries/${entry.id}/share`, {
+                        await apiRequest(`/api/journal/entries/${entry.id}/share`, {
                           method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ shared: e.target.checked })
                         });
-                        queryClient.invalidateQueries(['/api/journal/entries']);
+                        queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
                         toast({
                           title: e.target.checked ? 'Entry shared' : 'Entry privacy restored',
                           description: e.target.checked 
