@@ -17,15 +17,11 @@ export default function SpiritJournal() {
   const { account, connect, isConnecting } = useWallet();
   const [selectedView, setSelectedView] = useState<'recent' | 'learning' | 'shared'>('recent');
 
-  // Get all entries including shared ones
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
-    queryKey: ['/api/journal/entries', selectedView],
+    queryKey: ['/api/journal/entries', account],
     queryFn: async () => {
       if (!account) return [];
-      const endpoint = selectedView === 'shared' 
-        ? `/api/journal/entries/shared`
-        : `/api/journal/entries?wallet_address=${account}`;
-      const response = await fetch(endpoint);
+      const response = await fetch(`/api/journal/entries?wallet_address=${account}`);
       if (!response.ok) throw new Error('Failed to fetch entries');
       return response.json();
     },
