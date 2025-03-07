@@ -14,143 +14,113 @@ export default function FAQPage() {
           </Button>
         </Link>
 
-        <h1 className="text-4xl font-bold mb-8">Building on Electroneum</h1>
+        <h1 className="text-4xl font-bold mb-8">Connecting to Electroneum Mainnet</h1>
 
         <div className="space-y-8">
-          {/* Network Information */}
+          {/* MetaMask Setup Section */}
           <section className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">Network Information</h2>
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+              <SiMetabase className="text-[#F6851B]" />
+              Setting Up MetaMask
+            </h2>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                To interact with Spirit Journal on the Electroneum mainnet, you'll need to:
+              </p>
+              <ol className="list-decimal list-inside space-y-2 text-gray-600">
+                <li>Install the MetaMask browser extension if you haven't already</li>
+                <li>Click the MetaMask extension icon and unlock your wallet</li>
+                <li>Click the network dropdown at the top of MetaMask</li>
+                <li>Select "Add Network" and choose "Add Network Manually"</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* Network Configuration */}
+          <section className="bg-white p-8 rounded-lg shadow-sm">
+            <h2 className="text-2xl font-semibold mb-4">Network Configuration</h2>
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="font-medium mb-2">Mainnet Details</h3>
                 <dl className="space-y-2">
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Network Name:</dt>
                     <dd className="col-span-2">Electroneum Mainnet</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    <dt className="font-medium text-gray-600">Chain ID:</dt>
-                    <dd className="col-span-2">52014</dd>
+                    <dt className="font-medium text-gray-600">RPC URL:</dt>
+                    <dd className="col-span-2">https://rpc.ankr.com/electroneum</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    <dt className="font-medium text-gray-600">EVM Version:</dt>
-                    <dd className="col-span-2">London</dd>
+                    <dt className="font-medium text-gray-600">Chain ID:</dt>
+                    <dd className="col-span-2">5201421</dd>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <dt className="font-medium text-gray-600">Currency Symbol:</dt>
+                    <dd className="col-span-2">ETN</dd>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <dt className="font-medium text-gray-600">Block Explorer:</dt>
+                    <dd className="col-span-2">https://blockexplorer.electroneum.com/</dd>
                   </div>
                 </dl>
               </div>
             </div>
           </section>
 
-          {/* RPC Endpoints */}
+          {/* Getting ETN */}
           <section className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">RPC Endpoints</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium mb-2">Available RPC URLs</h3>
-                <ul className="list-disc list-inside space-y-2 text-gray-600">
-                  <li>ETN: <code className="bg-gray-100 px-2 py-1 rounded">https://rpc.electroneum.com</code></li>
-                  <li>Ankr: <code className="bg-gray-100 px-2 py-1 rounded">https://rpc.ankr.com/electroneum</code></li>
-                </ul>
-              </div>
-            </div>
+            <h2 className="text-2xl font-semibold mb-4">Getting ETN</h2>
+            <p className="text-gray-600 mb-4">
+              To interact with Spirit Journal on mainnet, you'll need ETN tokens. You can acquire ETN through:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-gray-600">
+              <li>Official Electroneum exchange partners</li>
+              <li>Direct purchase through supported platforms</li>
+              <li>Community trading platforms</li>
+            </ul>
           </section>
 
-          {/* Developer Resources */}
+          {/* Useful Resources */}
           <section className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">Developer Resources</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium mb-2">Documentation & Tools</h3>
-                <ul className="space-y-3">
-                  <li>
-                    <a 
-                      href="https://developer.electroneum.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:text-blue-700"
-                    >
-                      Developer Documentation <ExternalLink className="w-4 h-4 ml-1" />
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="https://github.com/electroneum/electroneum-sc"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:text-blue-700"
-                    >
-                      Smart Contract Repository <ExternalLink className="w-4 h-4 ml-1" />
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="https://chainlist.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:text-blue-700"
-                    >
-                      Chainlist (Easy Network Configuration) <ExternalLink className="w-4 h-4 ml-1" />
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* Block Explorers */}
-          <section className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">Block Explorers</h2>
-            <div className="space-y-4">
-              <ul className="space-y-3">
-                <li>
-                  <a 
-                    href="https://blockexplorer.electroneum.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center text-blue-600 hover:text-blue-700"
-                  >
-                    Main Explorer <ExternalLink className="w-4 h-4 ml-1" />
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="https://legacy-blockexplorer.electroneum.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center text-blue-600 hover:text-blue-700"
-                  >
-                    Legacy Explorer <ExternalLink className="w-4 h-4 ml-1" />
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          {/* Additional Resources */}
-          <section className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">Additional Resources</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium mb-2">Bug Reports & Support</h3>
-                <a 
-                  href="https://bugcrowd.com/electroneum"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-blue-600 hover:text-blue-700"
-                >
-                  Submit Vulnerability Reports <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">Current Events</h3>
-                <a 
-                  href="https://electroneum-hackathon-2025.devpost.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-blue-600 hover:text-blue-700"
-                >
-                  Hackathon (Jan-Mar 2025) <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
-              </div>
+            <h2 className="text-2xl font-semibold mb-4">Useful Resources</h2>
+            <div className="grid gap-4">
+              <a 
+                href="https://developer.electroneum.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 rounded-md border hover:bg-gray-50"
+              >
+                <div>
+                  <h3 className="font-medium">Developer Documentation</h3>
+                  <p className="text-sm text-gray-600">Official Electroneum developer resources</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-gray-400" />
+              </a>
+              <a 
+                href="https://chainlist.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 rounded-md border hover:bg-gray-50"
+              >
+                <div>
+                  <h3 className="font-medium">Chainlist</h3>
+                  <p className="text-sm text-gray-600">Easy network configuration through Chainlist</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-gray-400" />
+              </a>
+              <a 
+                href="https://testnet-blockexplorer.electroneum.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 rounded-md border hover:bg-gray-50"
+              >
+                <div>
+                  <h3 className="font-medium">Testnet Block Explorer</h3>
+                  <p className="text-sm text-gray-600">Track transactions and smart contracts on testnet</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-gray-400" />
+              </a>
             </div>
           </section>
         </div>

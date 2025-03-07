@@ -1,22 +1,22 @@
 import { ethers } from 'ethers';
 import { type JournalEntry } from '@shared/schema';
 
+const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
+const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
+const MAX_DISTRIBUTION_PERCENTAGE = 40;
+
 // Updated network configuration for Electroneum Mainnet
 const ELECTRONEUM_NETWORK = {
-  chainId: 52014, // Updated to mainnet chain ID
+  chainId: 5201421,
   name: 'Electroneum Mainnet',
-  rpcUrls: ['https://rpc.electroneum.com'],
+  rpcUrls: ['https://rpc.ankr.com/electroneum'],
   nativeCurrency: {
     name: 'Electroneum',
     symbol: 'ETN',
     decimals: 18
   },
-  blockExplorerUrls: ['https://blockexplorer.electroneum.com']
+  blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
-
-const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
-const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
-const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
 // ABI for ERC20 token contract
 const TOKEN_ABI = [
