@@ -145,14 +145,14 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
 
     // Create contract instances
     const tokenContract = new ethers.Contract(
-      SPIRIT_TOKEN_ADDRESS,
+      SPIRIT_TOKEN_ADDRESS!,
       TOKEN_ABI,
       provider
     );
 
-    // Check if token contract exists and has sufficient balance
+    // Check if contract exists and has sufficient balance
     try {
-      const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS);
+      const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!);
       console.log('Contract balance:', contractBalance.toString());
       console.log('Required amount:', amount.toString());
 
@@ -168,7 +168,7 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
 
     // Create reward contract instance
     const rewardContract = new ethers.Contract(
-      REWARD_DISTRIBUTION_ADDRESS,
+      REWARD_DISTRIBUTION_ADDRESS!,
       REWARD_DISTRIBUTION_ABI,
       signer
     );

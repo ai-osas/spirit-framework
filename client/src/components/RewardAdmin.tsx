@@ -10,7 +10,7 @@ const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
 const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
 
-// ABI matching our deployed SPIRIT_TestToken contract
+// ABI matching our deployed SPIRIT Token contract
 const TOKEN_ABI = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
@@ -39,15 +39,11 @@ export function RewardAdmin() {
       const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS!, TOKEN_ABI, provider);
 
       try {
-        // First verify the contract exists and is accessible
-        const [name, symbol] = await Promise.all([
+        // Verify the contract exists and is accessible - removed specific name checks
+        await Promise.all([
           tokenContract.name(),
           tokenContract.symbol()
         ]);
-
-        if (name !== "$SPIRIT Test Token" || symbol !== "SPIRIT_T") {
-          throw new Error("Invalid token contract - please verify deployment");
-        }
 
         // Get total supply and distributor balance
         const [supply, balance] = await Promise.all([
@@ -73,7 +69,7 @@ export function RewardAdmin() {
           toast({
             variant: "destructive",
             title: "Contract Not Found",
-            description: "The SPIRIT token contract could not be found. Please verify the contract deployment on Electroneum testnet."
+            description: "The SPIRIT token contract could not be found. Please verify the contract deployment on Electroneum mainnet."
           });
         } else {
           throw error;
@@ -160,16 +156,10 @@ export function RewardAdmin() {
                       signer
                     );
 
-                    // Verify contract before proceeding
+                    // Verify contract exists without checking specific name/symbol
                     try {
-                      const [name, symbol] = await Promise.all([
-                        tokenContract.name(),
-                        tokenContract.symbol()
-                      ]);
-
-                      if (name !== "$SPIRIT Test Token" || symbol !== "SPIRIT_T") {
-                        throw new Error("Invalid token contract - please verify deployment");
-                      }
+                      await tokenContract.name();
+                      await tokenContract.symbol();
                     } catch (error: any) {
                       if (error.code === 'BAD_DATA') {
                         throw new Error("SPIRIT token contract not found on this network. Please verify the contract deployment.");
