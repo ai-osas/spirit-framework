@@ -6,9 +6,9 @@ import { toast } from "../hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 import { AdminQueue } from './AdminQueue';
 
-const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
-const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
-const ADMIN_WALLET = '0xcb2FCB4802eBc2c17b7f06C12b03918c85faC2d0';
+const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
+const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
+const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
 
 // ABI matching our deployed SPIRIT_TestToken contract
 const TOKEN_ABI = [
@@ -29,14 +29,14 @@ export function RewardAdmin() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Only proceed if the connected wallet is the admin wallet
-  const isAdmin = account?.toLowerCase() === ADMIN_WALLET.toLowerCase();
+  const isAdmin = account?.toLowerCase() === ADMIN_WALLET?.toLowerCase();
 
   const fetchDistributionStats = async () => {
     if (!account || !window.ethereum || !isAdmin) return;
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS, TOKEN_ABI, provider);
+      const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS!, TOKEN_ABI, provider);
 
       try {
         // First verify the contract exists and is accessible
@@ -52,14 +52,14 @@ export function RewardAdmin() {
         // Get total supply and distributor balance
         const [supply, balance] = await Promise.all([
           tokenContract.totalSupply(),
-          tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS)
+          tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!)
         ]);
 
         setTotalSupply(ethers.formatUnits(supply, 18));
         setDistributorBalance(ethers.formatUnits(balance, 18));
 
         // Get transfer events from distributor to track unique recipients
-        const filter = tokenContract.filters.Transfer(REWARD_DISTRIBUTION_ADDRESS, null);
+        const filter = tokenContract.filters.Transfer(REWARD_DISTRIBUTION_ADDRESS!, null);
         const events = await tokenContract.queryFilter(filter);
         const recipients = new Set(events.map(e => {
           const event = e as ethers.EventLog;
@@ -155,7 +155,7 @@ export function RewardAdmin() {
                     const provider = new ethers.BrowserProvider(window.ethereum);
                     const signer = await provider.getSigner();
                     const tokenContract = new ethers.Contract(
-                      SPIRIT_TOKEN_ADDRESS,
+                      SPIRIT_TOKEN_ADDRESS!,
                       TOKEN_ABI,
                       signer
                     );
@@ -181,13 +181,13 @@ export function RewardAdmin() {
                     const fundAmount = ethers.parseUnits("1000", 18);
 
                     // Check admin wallet balance first
-                    const adminBalance = await tokenContract.balanceOf(account);
-                    if (adminBalance < fundAmount) {
+                    const adminBalance = await tokenContract.balanceOf(account!);
+                    if (adminBalance.lt(fundAmount)) {
                       throw new Error("Your wallet doesn't have enough SPIRIT tokens to fund the distribution contract.");
                     }
 
                     // Transfer tokens to distribution contract
-                    const tx = await tokenContract.transfer(REWARD_DISTRIBUTION_ADDRESS, fundAmount);
+                    const tx = await tokenContract.transfer(REWARD_DISTRIBUTION_ADDRESS!, fundAmount);
 
                     toast({
                       title: "Transaction Submitted",

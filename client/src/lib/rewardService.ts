@@ -1,21 +1,21 @@
 import { ethers } from 'ethers';
 import { type JournalEntry } from '@shared/schema';
 
-const REWARD_DISTRIBUTION_ADDRESS = '0xe1a50a164cb3fab65d8796c35541052865cb9fac';
-const SPIRIT_TOKEN_ADDRESS = '0xdf160577bb256d24746c33c928d281c346e45f25';
+const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
+const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
-// Updated network configuration for Electroneum Testnet
+// Updated network configuration for Electroneum Mainnet
 const ELECTRONEUM_NETWORK = {
-  chainId: 5201420,
-  name: 'Electroneum Testnet',
-  rpcUrls: ['https://rpc.ankr.com/electroneum_testnet'],
+  chainId: 5201421,
+  name: 'Electroneum Mainnet',
+  rpcUrls: ['https://rpc.ankr.com/electroneum'],
   nativeCurrency: {
     name: 'Electroneum',
     symbol: 'ETN',
     decimals: 18
   },
-  blockExplorerUrls: ['https://testnet-blockexplorer.electroneum.com/']
+  blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
 
 // ABI for ERC20 token contract
@@ -61,7 +61,7 @@ const REWARD_CRITERIA = {
 };
 
 export async function calculateEntryReward(
-  entry: JournalEntry, 
+  entry: JournalEntry,
   previousEntry?: JournalEntry
 ): Promise<bigint> {
   const contentLength = entry.content.trim().length;
@@ -86,7 +86,7 @@ export async function calculateEntryReward(
     const mediaCount = Math.min(entry.media.length, REWARD_CRITERIA.QUALITY_THRESHOLDS.MEDIA_BONUS.MAX_MEDIA);
     for (let i = 0; i < mediaCount; i++) {
       const mediaItem = entry.media[i];
-      reward += mediaItem.file_type === 'image' 
+      reward += mediaItem.file_type === 'image'
         ? REWARD_CRITERIA.QUALITY_THRESHOLDS.MEDIA_BONUS.IMAGE
         : REWARD_CRITERIA.QUALITY_THRESHOLDS.MEDIA_BONUS.AUDIO;
     }
@@ -116,7 +116,7 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     console.log('Recipient:', recipientAddress);
     console.log('Amount:', amount.toString());
 
-    // Request network switch to Electroneum Testnet
+    // Request network switch to Electroneum Mainnet
     try {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
@@ -129,14 +129,14 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
         }]
       });
     } catch (switchError: any) {
-      console.error('Failed to add/switch to Electroneum testnet:', switchError);
-      throw new Error('Please add and switch to the Electroneum testnet in your wallet');
+      console.error('Failed to add/switch to Electroneum mainnet:', switchError);
+      throw new Error('Please add and switch to the Electroneum mainnet in your wallet');
     }
 
     // Verify correct network
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
     if (parseInt(chainId, 16) !== ELECTRONEUM_NETWORK.chainId) {
-      throw new Error('Please switch to Electroneum testnet to receive rewards');
+      throw new Error('Please switch to Electroneum mainnet to receive rewards');
     }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -156,12 +156,12 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       console.log('Contract balance:', contractBalance.toString());
       console.log('Required amount:', amount.toString());
 
-      if (contractBalance < amount) {
+      if (contractBalance.lt(amount)) {
         throw new Error('The reward distribution contract has insufficient SPIRIT tokens. Please contact an administrator to fund the contract.');
       }
     } catch (error: any) {
       if (error.code === 'BAD_DATA' || error.message.includes('could not decode result data')) {
-        throw new Error('The SPIRIT token contract is not properly deployed on the Electroneum testnet. Please verify the contract deployment.');
+        throw new Error('The SPIRIT token contract is not properly deployed on the Electroneum mainnet. Please verify the contract deployment.');
       }
       throw error;
     }
@@ -188,13 +188,13 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     if (error.code === 4001) {
       throw new Error('Transaction was rejected by user');
     } else if (error.code === -32000) {
-      throw new Error('Insufficient ETN for transaction. Visit https://faucet.electroneum.com/ to get testnet ETN');
+      throw new Error('Insufficient ETN for transaction');
     } else if (error.message.includes('token contract is not properly deployed')) {
       throw error; // Pass through our custom error
     } else if (error.data?.message?.includes('execution reverted')) {
-      throw new Error('Smart contract execution failed. Please verify contract status on testnet explorer');
+      throw new Error('Smart contract execution failed. Please verify contract status on mainnet explorer');
     } else if (error.message.includes('network')) {
-      throw new Error('Please ensure you are connected to Electroneum testnet and try again');
+      throw new Error('Please ensure you are connected to Electroneum mainnet and try again');
     } else {
       throw new Error(error.message || 'Failed to distribute tokens. Please try again later');
     }

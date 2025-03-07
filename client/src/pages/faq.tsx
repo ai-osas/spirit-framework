@@ -14,7 +14,7 @@ export default function FAQPage() {
           </Button>
         </Link>
 
-        <h1 className="text-4xl font-bold mb-8">Connecting to Electroneum Testnet</h1>
+        <h1 className="text-4xl font-bold mb-8">Connecting to Electroneum Mainnet</h1>
 
         <div className="space-y-8">
           {/* MetaMask Setup Section */}
@@ -25,7 +25,7 @@ export default function FAQPage() {
             </h2>
             <div className="space-y-4">
               <p className="text-gray-600">
-                To interact with Spirit Journal on the Electroneum testnet, you'll need to:
+                To interact with Spirit Journal on the Electroneum mainnet, you'll need to:
               </p>
               <ol className="list-decimal list-inside space-y-2 text-gray-600">
                 <li>Install the MetaMask browser extension if you haven't already</li>
@@ -41,19 +41,19 @@ export default function FAQPage() {
             <h2 className="text-2xl font-semibold mb-4">Network Configuration</h2>
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="font-medium mb-2">Testnet Details</h3>
+                <h3 className="font-medium mb-2">Mainnet Details</h3>
                 <dl className="space-y-2">
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Network Name:</dt>
-                    <dd className="col-span-2">Electroneum Testnet</dd>
+                    <dd className="col-span-2">Electroneum Mainnet</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">RPC URL:</dt>
-                    <dd className="col-span-2">https://rpc.ankr.com/electroneum_testnet</dd>
+                    <dd className="col-span-2">https://rpc.ankr.com/electroneum</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Chain ID:</dt>
-                    <dd className="col-span-2">5201420</dd>
+                    <dd className="col-span-2">5201421</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Currency Symbol:</dt>
@@ -61,27 +61,24 @@ export default function FAQPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Block Explorer:</dt>
-                    <dd className="col-span-2">https://testnet-blockexplorer.electroneum.com/</dd>
+                    <dd className="col-span-2">https://blockexplorer.electroneum.com/</dd>
                   </div>
                 </dl>
               </div>
             </div>
           </section>
 
-          {/* Getting Test ETN */}
+          {/* Getting ETN */}
           <section className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">Getting Test ETN</h2>
+            <h2 className="text-2xl font-semibold mb-4">Getting ETN</h2>
             <p className="text-gray-600 mb-4">
-              To get started with testing, you'll need some test ETN tokens. Visit the official Electroneum testnet faucet:
+              To interact with Spirit Journal on mainnet, you'll need ETN tokens. You can acquire ETN through:
             </p>
-            <a 
-              href="https://faucet.electroneum.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700"
-            >
-              Electroneum Testnet Faucet <ExternalLink className="w-4 h-4" />
-            </a>
+            <ul className="list-disc list-inside space-y-2 text-gray-600">
+              <li>Official Electroneum exchange partners</li>
+              <li>Direct purchase through supported platforms</li>
+              <li>Community trading platforms</li>
+            </ul>
           </section>
 
           {/* Useful Resources */}
