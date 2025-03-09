@@ -3,7 +3,6 @@ import { type JournalEntry } from '@shared/schema';
 
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
-const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
 // Updated network configuration for Electroneum Mainnet
 const ELECTRONEUM_NETWORK = {
@@ -17,19 +16,6 @@ const ELECTRONEUM_NETWORK = {
   },
   blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
-
-// ABI matching our deployed SPIRIT Token contract
-const TOKEN_ABI = [
-  "function name() view returns (string)",
-  "function symbol() view returns (string)",
-  "function decimals() view returns (uint8)",
-  "function balanceOf(address account) view returns (uint256)",
-  "function totalSupply() view returns (uint256)",
-  "function transfer(address to, uint256 amount) returns (bool)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "event Transfer(address indexed from, address indexed to, uint256 value)",
-  "event Approval(address indexed owner, address indexed spender, uint256 value)"
-];
 
 // ABI matching our deployed RewardDistribution contract
 const REWARD_DISTRIBUTION_ABI = [
@@ -48,6 +34,13 @@ const REWARD_DISTRIBUTION_ABI = [
     "name": "owner",
     "outputs": [{"name": "", "type": "address"}],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "approveTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ];
@@ -151,13 +144,6 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
-    // Create token contract instance
-    const tokenContract = new ethers.Contract(
-      SPIRIT_TOKEN_ADDRESS!,
-      TOKEN_ABI,
-      signer
-    );
-
     // Create distribution contract instance
     const distributionContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS!,
@@ -165,19 +151,20 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       signer
     );
 
-    // First check token balance of distribution contract
-    const distributionBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!);
-
-    if (distributionBalance.lt(amount)) {
-      throw new Error('Insufficient balance in distribution contract');
+    // First approve tokens if needed
+    try {
+      await distributionContract.approveTokens();
+    } catch (error: any) {
+      if (!error.message.includes('already approved')) {
+        throw error;
+      }
     }
 
-    // Then check if distribution contract has approval to spend tokens
+    // Then distribute the reward
     const tx = await distributionContract.distributeReward(recipientAddress, amount);
     await tx.wait();
 
     return true;
-
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 

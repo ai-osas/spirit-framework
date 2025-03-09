@@ -81,7 +81,7 @@ export default function FAQPage() {
             </ul>
           </section>
 
-          {/* Useful Resources */}
+          {/* Resources */}
           <section className="bg-white p-8 rounded-lg shadow-sm">
             <h2 className="text-2xl font-semibold mb-4">Useful Resources</h2>
             <div className="grid gap-4">
@@ -94,18 +94,6 @@ export default function FAQPage() {
                 <div>
                   <h3 className="font-medium">Developer Documentation</h3>
                   <p className="text-sm text-gray-600">Official Electroneum developer resources</p>
-                </div>
-                <ExternalLink className="w-4 h-4 text-gray-400" />
-              </a>
-              <a 
-                href="https://chainlist.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-md border hover:bg-gray-50"
-              >
-                <div>
-                  <h3 className="font-medium">Chainlist</h3>
-                  <p className="text-sm text-gray-600">Easy network configuration through Chainlist</p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-gray-400" />
               </a>
