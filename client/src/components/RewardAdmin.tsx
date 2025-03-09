@@ -36,7 +36,11 @@ export function RewardAdmin() {
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS!, TOKEN_ABI, provider);
+      const tokenContract = new ethers.Contract(
+        SPIRIT_TOKEN_ADDRESS!,
+        TOKEN_ABI,
+        provider
+      );
 
       try {
         // Get total supply and distributor balance
@@ -45,16 +49,17 @@ export function RewardAdmin() {
           tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!)
         ]);
 
-        setTotalSupply(ethers.formatUnits(supply, 18));
-        setDistributorBalance(ethers.formatUnits(balance, 18));
+        // Format values with proper decimals
+        const formattedSupply = ethers.formatUnits(supply, 18);
+        const formattedBalance = ethers.formatUnits(balance, 18);
+
+        setTotalSupply(formattedSupply);
+        setDistributorBalance(formattedBalance);
 
         // Get transfer events from distributor to track unique recipients
         const filter = tokenContract.filters.Transfer(REWARD_DISTRIBUTION_ADDRESS!, null);
         const events = await tokenContract.queryFilter(filter);
-        const recipients = new Set(events.map(e => {
-          const event = e as ethers.EventLog;
-          return event.args?.[1].toLowerCase() || '';
-        }));
+        const recipients = new Set(events.map(e => e.args?.[1].toLowerCase() || ''));
         setUniqueRecipients(recipients);
 
       } catch (error: any) {
@@ -63,7 +68,7 @@ export function RewardAdmin() {
           toast({
             variant: "destructive",
             title: "Contract Not Found",
-            description: "The SPIRIT token contract could not be found. Please verify the contract deployment on Electroneum mainnet."
+            description: "The SPRT token contract could not be found. Please verify the contract deployment."
           });
         } else {
           throw error;
@@ -75,7 +80,7 @@ export function RewardAdmin() {
       toast({
         variant: "destructive",
         title: "Failed to Load Stats",
-        description: "Could not load distribution statistics. Please verify your network connection and contract deployment."
+        description: "Could not load distribution statistics. Please verify your network connection."
       });
     }
   };
@@ -89,8 +94,12 @@ export function RewardAdmin() {
   // Only render for admin wallet
   if (!isAdmin) return null;
 
-  const maxDistribution = Number(totalSupply) * 0.4;
-  const currentDistributionPercentage = (Number(distributorBalance) / Number(totalSupply)) * 100;
+  // Calculate distribution percentage properly using the formatted values
+  const distributorBalanceNum = parseFloat(distributorBalance);
+  const totalSupplyNum = parseFloat(totalSupply);
+  const currentDistributionPercentage = totalSupplyNum > 0 
+    ? (distributorBalanceNum / totalSupplyNum) * 100 
+    : 0;
 
   const handleFundDistribution = async () => {
     if (!window.ethereum || !account) {
@@ -164,17 +173,12 @@ export function RewardAdmin() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-500">Total Supply</p>
-              <p className="text-lg font-medium">{Number(totalSupply).toFixed(2)} SPIRIT</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-gray-500">Distribution Cap (40%)</p>
-              <p className="text-lg font-medium">{maxDistribution.toFixed(2)} SPIRIT</p>
+              <p className="text-lg font-medium">{Number(totalSupply).toFixed(2)} SPRT</p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500">Available for Distribution</p>
-              <p className="text-lg font-medium">{Number(distributorBalance).toFixed(2)} SPIRIT</p>
+              <p className="text-lg font-medium">{Number(distributorBalance).toFixed(2)} SPRT</p>
               <p className="text-xs text-gray-400">
                 {currentDistributionPercentage.toFixed(2)}% of total supply available
               </p>
