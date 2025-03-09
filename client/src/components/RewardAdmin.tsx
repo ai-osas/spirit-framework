@@ -6,14 +6,14 @@ import { toast } from "../hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 import { AdminQueue } from './AdminQueue';
 
+const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
+const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
+const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
+
 // Log environment variables (only first/last 6 chars for security)
 console.log('Token Address:', SPIRIT_TOKEN_ADDRESS ? `${SPIRIT_TOKEN_ADDRESS.slice(0, 6)}...${SPIRIT_TOKEN_ADDRESS.slice(-6)}` : 'Not set');
 console.log('Distribution Address:', REWARD_DISTRIBUTION_ADDRESS ? `${REWARD_DISTRIBUTION_ADDRESS.slice(0, 6)}...${REWARD_DISTRIBUTION_ADDRESS.slice(-6)}` : 'Not set');
 console.log('Admin Wallet:', ADMIN_WALLET ? `${ADMIN_WALLET.slice(0, 6)}...${ADMIN_WALLET.slice(-6)}` : 'Not set');
-
-const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
-const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
-const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
 
 // ABI matching our deployed SPIRIT Token contract
 const TOKEN_ABI = [
