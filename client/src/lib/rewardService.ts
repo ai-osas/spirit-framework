@@ -17,8 +17,11 @@ const ELECTRONEUM_NETWORK = {
   blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
 
-// ABI for SPIRIT Token contract
+// ABI for SPRT Token contract (updated name)
 const TOKEN_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function balanceOf(address account) view returns (uint256)",
@@ -41,7 +44,7 @@ const REWARD_DISTRIBUTION_ABI = [
 
 // Reward criteria configuration
 const REWARD_CRITERIA = {
-  BASE_REWARD: ethers.parseUnits('0.5', 18),
+  BASE_REWARD: ethers.parseUnits('1.0', 18), // Increased base reward to 1 SPRT
   MIN_CONTENT_LENGTH: 200,
   QUALITY_THRESHOLDS: {
     CONTENT_LENGTH: {
@@ -65,10 +68,8 @@ export async function calculateEntryReward(
   previousEntry?: JournalEntry
 ): Promise<bigint> {
   const contentLength = entry.content.trim().length;
-  console.log('Content length:', contentLength);
 
   if (contentLength < REWARD_CRITERIA.MIN_CONTENT_LENGTH) {
-    console.log('Content too short');
     return BigInt(0);
   }
 
@@ -175,7 +176,7 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     } else if (error.code === -32000) {
       throw new Error('Insufficient ETN for transaction');
     } else if (error.message.includes('insufficient balance')) {
-      throw new Error('The distribution contract has insufficient SPIRIT tokens');
+      throw new Error('The distribution contract has insufficient SPRT tokens');
     } else if (error.data?.message?.includes('execution reverted')) {
       throw new Error('Transaction failed. Please verify you are connected to Electroneum mainnet');
     } else {
