@@ -7,15 +7,15 @@ const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
 // Updated network configuration for Electroneum Mainnet
 const ELECTRONEUM_NETWORK = {
-  chainId: 52014,
+  chainId: 52014,  // 0xCB4E in decimal
   name: 'Electroneum Mainnet',
-  rpcUrls: ['https://rpc.ankr.com/electroneum'],
+  rpcUrls: ['https://api.electroneum.com'],
   nativeCurrency: {
     name: 'Electroneum',
     symbol: 'ETN',
     decimals: 18
   },
-  blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
+  blockExplorerUrls: ['https://blockexplorer.electroneum.com']
 };
 
 // ABI for ERC20 token contract

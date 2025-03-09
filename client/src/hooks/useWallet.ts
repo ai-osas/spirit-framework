@@ -20,8 +20,8 @@ const ELECTRONEUM_MAINNET = {
     symbol: 'ETN',
     decimals: 18
   },
-  rpcUrls: ['https://rpc.ankr.com/electroneum'],
-  blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
+  rpcUrls: ['https://api.electroneum.com'],
+  blockExplorerUrls: ['https://blockexplorer.electroneum.com']
 };
 
 export function useWallet() {
@@ -101,6 +101,8 @@ export function useWallet() {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0xCB4E' }],
       });
+
+      await checkNetwork();
     } catch (switchError: any) {
       // If the network doesn't exist, add it
       if (switchError.code === 4902) {
@@ -109,17 +111,24 @@ export function useWallet() {
             method: 'wallet_addEthereumChain',
             params: [ELECTRONEUM_MAINNET],
           });
+          await checkNetwork();
         } catch (addError) {
           console.error('Failed to add Electroneum mainnet:', addError);
-          throw new Error('Failed to add Electroneum mainnet to your wallet');
+          toast({
+            variant: "destructive",
+            title: "Network Error",
+            description: "Failed to add Electroneum mainnet. Please try adding it manually.",
+          });
         }
       } else {
         console.error('Failed to switch to Electroneum mainnet:', switchError);
-        throw new Error('Failed to switch to Electroneum mainnet');
+        toast({
+          variant: "destructive",
+          title: "Network Error",
+          description: "Failed to switch to Electroneum mainnet. Please try switching manually.",
+        });
       }
     }
-
-    await checkNetwork();
   };
 
   const connect = async () => {
