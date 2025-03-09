@@ -4,7 +4,7 @@ import { useLocation, Link } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2, Brain, Users, Clock } from 'lucide-react';
+import { PlusCircle, Search, Loader2, Brain, Users, Clock, AlertTriangle } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
 import { type JournalEntry } from '@shared/schema';
 import { LearningConstellation } from './LearningConstellation';
@@ -14,7 +14,7 @@ import { RewardAdmin } from './RewardAdmin';
 export default function SpiritJournal() {
   const [_, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
-  const { account, connect, isConnecting } = useWallet();
+  const { account, connect, disconnect, isConnecting, currentNetwork, switchToMainnet } = useWallet();
   const [selectedView, setSelectedView] = useState<'recent' | 'learning' | 'shared'>('recent');
 
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
@@ -71,16 +71,46 @@ export default function SpiritJournal() {
         <div className="p-4">
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
+          {/* Network Status */}
+          {currentNetwork !== 'mainnet' && (
+            <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div className="flex items-center gap-2 text-yellow-700 mb-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-medium">Wrong Network</span>
+              </div>
+              <p className="text-sm text-yellow-600 mb-2">
+                Please switch to Electroneum mainnet to use Spirit Journal.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={switchToMainnet}
+              >
+                Switch to Mainnet
+              </Button>
+            </div>
+          )}
+
           <TokenBalance />
           <RewardAdmin />
 
-          <Button 
-            onClick={() => navigate('/journal/new')}
-            className="w-full mb-8 mt-4"
-          >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            New Entry
-          </Button>
+          <div className="flex flex-col gap-2 mb-8">
+            <Button 
+              onClick={() => navigate('/journal/new')}
+              className="w-full"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" />
+              New Entry
+            </Button>
+            <Button
+              variant="outline"
+              onClick={disconnect}
+              className="w-full"
+            >
+              Disconnect Wallet
+            </Button>
+          </div>
 
           <div className="space-y-1">
             <h2 className="text-sm font-medium mb-2 text-gray-500">YOUR PATTERNS</h2>
