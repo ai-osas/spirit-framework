@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,30 +6,9 @@ import { toast } from "../hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 import { AdminQueue } from './AdminQueue';
 
-// Get environment variables for contracts
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
 const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
-
-// Add detailed logging of environment variables
-console.log('Environment Variables Status:');
-console.log('Spirit Token:', SPIRIT_TOKEN_ADDRESS ? 
-  `${SPIRIT_TOKEN_ADDRESS.slice(0, 6)}...${SPIRIT_TOKEN_ADDRESS.slice(-6)}` : 
-  'Not set - Check VITE_SPIRIT_TOKEN_ADDRESS'
-);
-console.log('Distribution:', REWARD_DISTRIBUTION_ADDRESS ? 
-  `${REWARD_DISTRIBUTION_ADDRESS.slice(0, 6)}...${REWARD_DISTRIBUTION_ADDRESS.slice(-6)}` : 
-  'Not set - Check VITE_DISTRIBUTION_CONTRACT_ADDRESS'
-);
-console.log('Admin:', ADMIN_WALLET ? 
-  `${ADMIN_WALLET.slice(0, 6)}...${ADMIN_WALLET.slice(-6)}` : 
-  'Not set - Check VITE_ADMIN_WALLET_ADDRESS'
-);
-
-// Verify all required addresses are present
-if (!SPIRIT_TOKEN_ADDRESS || !REWARD_DISTRIBUTION_ADDRESS || !ADMIN_WALLET) {
-  console.error('Missing required environment variables for contract interaction');
-}
 
 // ABI matching our deployed SPIRIT Token contract
 const TOKEN_ABI = [
@@ -60,12 +39,6 @@ export function RewardAdmin() {
       const tokenContract = new ethers.Contract(SPIRIT_TOKEN_ADDRESS!, TOKEN_ABI, provider);
 
       try {
-        // Verify the contract exists and is accessible - removed specific name checks
-        await Promise.all([
-          tokenContract.name(),
-          tokenContract.symbol()
-        ]);
-
         // Get total supply and distributor balance
         const [supply, balance] = await Promise.all([
           tokenContract.totalSupply(),
@@ -118,7 +91,6 @@ export function RewardAdmin() {
 
   const maxDistribution = Number(totalSupply) * 0.4;
   const currentDistributionPercentage = (Number(distributorBalance) / Number(totalSupply)) * 100;
-  const remainingForDistribution = maxDistribution - Number(distributorBalance);
 
   return (
     <div className="space-y-6">
@@ -176,17 +148,6 @@ export function RewardAdmin() {
                       TOKEN_ABI,
                       signer
                     );
-
-                    // Verify contract exists without checking specific name/symbol
-                    try {
-                      await tokenContract.name();
-                      await tokenContract.symbol();
-                    } catch (error: any) {
-                      if (error.code === 'BAD_DATA') {
-                        throw new Error("SPIRIT token contract not found on this network. Please verify the contract deployment.");
-                      }
-                      throw error;
-                    }
 
                     // Fund with 1000 SPIRIT tokens
                     const fundAmount = ethers.parseUnits("1000", 18);
