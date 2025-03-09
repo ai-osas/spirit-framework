@@ -36,8 +36,8 @@ export function useWallet() {
     if (window.ethereum) {
       try {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        const currentChainId = chainId as string;
-        setCurrentNetwork(currentChainId === '0xCB4E' ? 'mainnet' : 'other');
+        console.log('Current chain ID:', chainId); // Add logging
+        setCurrentNetwork(chainId === '0xCB4E' ? 'mainnet' : 'other');
       } catch (err) {
         console.error('Failed to get network:', err);
       }
@@ -152,8 +152,8 @@ export function useWallet() {
       await switchToMainnet();
 
       // Then connect the wallet
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
       });
       setAccount(accounts[0]);
     } catch (err: any) {
