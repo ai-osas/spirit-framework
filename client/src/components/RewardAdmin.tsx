@@ -23,8 +23,8 @@ const TOKEN_ABI = [
 
 export function RewardAdmin() {
   const { account } = useWallet();
-  const [distributorBalance, setDistributorBalance] = useState<string>('0');
-  const [totalSupply, setTotalSupply] = useState<string>('0');
+  const [distributorBalance, setDistributorBalance] = useState<bigint>(BigInt(0));
+  const [totalSupply, setTotalSupply] = useState<bigint>(BigInt(0));
   const [uniqueRecipients, setUniqueRecipients] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,12 +49,9 @@ export function RewardAdmin() {
           tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!)
         ]);
 
-        // Format values with proper decimals
-        const formattedSupply = ethers.formatUnits(supply, 18);
-        const formattedBalance = ethers.formatUnits(balance, 18);
-
-        setTotalSupply(formattedSupply);
-        setDistributorBalance(formattedBalance);
+        // Store raw BigInt values
+        setTotalSupply(supply);
+        setDistributorBalance(balance);
 
         // Get transfer events from distributor to track unique recipients
         const filter = tokenContract.filters.Transfer(REWARD_DISTRIBUTION_ADDRESS!, null);
@@ -94,15 +91,17 @@ export function RewardAdmin() {
   // Only render for admin wallet
   if (!isAdmin) return null;
 
-  // Calculate distribution percentage
+  // Calculate distribution percentage using BigInt values
   const calculateDistributionPercentage = () => {
-    const distributorBalanceNum = parseFloat(distributorBalance);
-    const totalSupplyNum = parseFloat(totalSupply);
+    if (totalSupply === BigInt(0)) return 0;
 
-    if (totalSupplyNum === 0) return 0;
-
-    return (distributorBalanceNum / totalSupplyNum) * 100;
+    // Convert to number for percentage calculation
+    const percentage = (Number(distributorBalance) / Number(totalSupply)) * 100;
+    return percentage;
   };
+
+  const formattedBalance = ethers.formatUnits(distributorBalance, 18);
+  const formattedSupply = ethers.formatUnits(totalSupply, 18);
 
   const handleFundDistribution = async () => {
     if (!window.ethereum || !account) {
@@ -176,12 +175,12 @@ export function RewardAdmin() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-500">Total Supply</p>
-              <p className="text-lg font-medium">{Number(totalSupply).toFixed(2)} SPRT</p>
+              <p className="text-lg font-medium">{Number(formattedSupply).toFixed(2)} SPRT</p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500">Available for Distribution</p>
-              <p className="text-lg font-medium">{Number(distributorBalance).toFixed(2)} SPRT</p>
+              <p className="text-lg font-medium">{Number(formattedBalance).toFixed(2)} SPRT</p>
               <p className="text-xs text-gray-400">
                 {calculateDistributionPercentage().toFixed(2)}% of total supply available
               </p>

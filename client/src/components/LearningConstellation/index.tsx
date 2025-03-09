@@ -9,6 +9,7 @@ import { useLocation } from 'wouter';
 import { useWallet } from '@/hooks/useWallet';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Props {
   entries: JournalEntry[];
@@ -20,9 +21,9 @@ export function LearningConstellation({ entries, viewMode }: Props) {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showAllJournals, setShowAllJournals] = useState(false);
+  const [showAllPatterns, setShowAllPatterns] = useState(false);
 
-  // Get all patterns - hooks must be called before any conditional returns
+  // Get all patterns
   const { data: patterns = [], isLoading } = useQuery({
     queryKey: ['learning-patterns', entries.map(e => e.id).join(',')],
     queryFn: async () => {
@@ -38,13 +39,30 @@ export function LearningConstellation({ entries, viewMode }: Props) {
     enabled: entries.length > 0,
   });
 
+  // Toggle sharing mutation
+  const toggleSharing = useMutation({
+    mutationFn: async ({ entryId, isShared }: { entryId: number; isShared: boolean }) => {
+      await apiRequest('PATCH', `/api/journal/entries/${entryId}/share`, {
+        shared: isShared
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
+      queryClient.invalidateQueries({ queryKey: ['learning-patterns'] });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update sharing status. Please try again.",
+      });
+    }
+  });
+
   // Add to private collection mutation
   const addToPrivate = useMutation({
     mutationFn: async (entryId: number) => {
-      const response = await fetch(`/api/journal/entries/${entryId}/collect?wallet_address=${account}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await apiRequest('POST', `/api/journal/entries/${entryId}/collect?wallet_address=${account}`, {});
       if (!response.ok) throw new Error('Failed to add to private collection');
       return response.json();
     },
@@ -53,7 +71,7 @@ export function LearningConstellation({ entries, viewMode }: Props) {
       queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
       toast({
         title: "Added to Collection",
-        description: "Journal added to your private collection.",
+        description: "Pattern added to your private collection.",
       });
     },
     onError: () => {
@@ -77,52 +95,7 @@ export function LearningConstellation({ entries, viewMode }: Props) {
     );
   }
 
-  // Render Spirit Study placeholder for learning mode
-  if (viewMode === 'learning') {
-    return (
-      <div className="grid place-items-center h-96">
-        <Card className="max-w-2xl p-8 text-center">
-          <div className="flex justify-center mb-6">
-            <Sparkles className="w-12 h-12 text-blue-500" />
-          </div>
-          <h3 className="text-2xl font-semibold mb-4">
-            Spirit Study Coming Soon
-          </h3>
-          <p className="text-gray-600 mb-6">
-            We're building an intelligent learning system that analyzes your journal entries
-            to create personalized learning paths. Spirit Study will help you discover
-            patterns in your learning journey and suggest optimal ways to deepen your understanding.
-          </p>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-700 mb-2">What to Expect</h4>
-            <ul className="text-sm text-blue-600 text-left list-disc list-inside space-y-2">
-              <li>AI-powered learning path recommendations</li>
-              <li>Personalized study materials based on your interests</li>
-              <li>Progress tracking and adaptive learning suggestions</li>
-              <li>Connection to a community of like-minded learners</li>
-            </ul>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Render empty state
-  if (patterns.length === 0) {
-    return (
-      <div className="grid place-items-center h-96">
-        <div className="text-center max-w-md">
-          <h3 className="text-lg font-semibold mb-2">No Learning Patterns Yet</h3>
-          <p className="text-gray-600">
-            Start writing about what you're learning, and we'll help you identify patterns
-            and connections in your knowledge journey.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Filter patterns based on view mode
+  // Filter patterns based on view mode and sharing preferences
   const displayPatterns = (() => {
     switch (viewMode) {
       case 'shared':
@@ -131,10 +104,10 @@ export function LearningConstellation({ entries, viewMode }: Props) {
           pattern.isShared && pattern.creator !== account
         );
       case 'recent':
-        // Show user's own patterns and collected patterns
-        return patterns.filter(pattern =>
-          pattern.creator === account || pattern.inPrivateCollection
-        );
+        // Show either all patterns or just the user's own
+        return showAllPatterns
+          ? patterns
+          : patterns.filter(pattern => pattern.creator === account);
       default:
         // Default to showing user's own patterns
         return patterns.filter(pattern => pattern.creator === account);
@@ -147,11 +120,11 @@ export function LearningConstellation({ entries, viewMode }: Props) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Switch
-              checked={showAllJournals}
-              onCheckedChange={setShowAllJournals}
+              checked={showAllPatterns}
+              onCheckedChange={setShowAllPatterns}
             />
             <span className="text-sm text-gray-600">
-              {showAllJournals ? 'Showing All Journals' : 'Showing My Journals'}
+              {showAllPatterns ? 'Showing All Patterns' : 'Showing My Patterns'}
             </span>
           </div>
         </div>
@@ -171,24 +144,34 @@ export function LearningConstellation({ entries, viewMode }: Props) {
                   Confidence: {Math.round(pattern.confidence * 100)}%
                 </span>
               </div>
-              {pattern.creator !== account && pattern.isShared && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => addToPrivate.mutate(pattern.id)}
-                  disabled={addToPrivate.isPending || pattern.inPrivateCollection}
-                >
-                  {pattern.inPrivateCollection ? (
-                    <BookmarkCheck className="w-4 h-4 text-[#B4A170]" />
-                  ) : (
-                    <BookmarkPlus className="w-4 h-4" />
-                  )}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {pattern.creator === account && (
+                  <Switch
+                    checked={pattern.isShared}
+                    onCheckedChange={(checked) => 
+                      toggleSharing.mutate({ entryId: pattern.id, isShared: checked })
+                    }
+                    aria-label="Toggle sharing"
+                  />
+                )}
+                {pattern.creator !== account && pattern.isShared && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => addToPrivate.mutate(pattern.id)}
+                    disabled={addToPrivate.isPending || pattern.inPrivateCollection}
+                  >
+                    {pattern.inPrivateCollection ? (
+                      <BookmarkCheck className="w-4 h-4 text-[#B4A170]" />
+                    ) : (
+                      <BookmarkPlus className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
 
             <span className="text-sm font-medium">{pattern.topic}</span>
-
             <p className="text-gray-600 mb-4">{pattern.description}</p>
 
             <div className="flex items-center gap-2 mb-4">
@@ -213,7 +196,7 @@ export function LearningConstellation({ entries, viewMode }: Props) {
             <Button
               variant="ghost"
               className="w-full justify-between"
-              onClick={() => navigate(`/journal/pattern/${index + 1}`)}
+              onClick={() => navigate(`/journal/pattern/${pattern.id}`)}
             >
               Explore Pattern
               <ChevronRight className="w-4 h-4" />
