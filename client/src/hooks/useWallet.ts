@@ -20,7 +20,7 @@ const ELECTRONEUM_MAINNET = {
     symbol: 'ETN',
     decimals: 18
   },
-  rpcUrls: ['https://api.electroneum.com'],
+  rpcUrls: ['https://rpc.ankr.com/electroneum'],
   blockExplorerUrls: ['https://blockexplorer.electroneum.com']
 };
 
@@ -36,7 +36,8 @@ export function useWallet() {
     if (window.ethereum) {
       try {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        setCurrentNetwork(chainId === '0xCB5E' ? 'mainnet' : 'other');
+        const currentChainId = chainId as string;
+        setCurrentNetwork(currentChainId === '0xCB5E' ? 'mainnet' : 'other');
       } catch (err) {
         console.error('Failed to get network:', err);
       }
@@ -71,11 +72,12 @@ export function useWallet() {
             title: "Wallet Connected",
             description: `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
           });
+          checkNetwork();
         }
       };
 
       const handleChainChanged = (_chainId: string) => {
-        window.location.reload();
+        checkNetwork();
       };
 
       window.ethereum.on('accountsChanged', handleAccountsChanged);

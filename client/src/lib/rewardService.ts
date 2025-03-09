@@ -5,11 +5,11 @@ const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_A
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
-// Updated network configuration for Electroneum Mainnet
+// Update the network configuration
 const ELECTRONEUM_NETWORK = {
   chainId: 52046,  // 0xCB5E in decimal
   name: 'Electroneum Mainnet',
-  rpcUrls: ['https://api.electroneum.com'],
+  rpcUrls: ['https://rpc.ankr.com/electroneum'],
   nativeCurrency: {
     name: 'Electroneum',
     symbol: 'ETN',
