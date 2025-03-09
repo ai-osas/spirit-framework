@@ -13,7 +13,7 @@ declare global {
 
 // Electroneum Mainnet configuration
 const ELECTRONEUM_MAINNET = {
-  chainId: '0x4F5DED',  // 5201421 in hex
+  chainId: '0xCB4E',  // 52014 in hex
   chainName: 'Electroneum Mainnet',
   nativeCurrency: {
     name: 'Electroneum',
@@ -36,7 +36,7 @@ export function useWallet() {
     if (window.ethereum) {
       try {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        setCurrentNetwork(chainId === '0x4F5DED' ? 'mainnet' : 'other');
+        setCurrentNetwork(chainId === '0xCB4E' ? 'mainnet' : 'other');
       } catch (err) {
         console.error('Failed to get network:', err);
       }
@@ -75,7 +75,7 @@ export function useWallet() {
       };
 
       const handleChainChanged = (chainId: string) => {
-        setCurrentNetwork(chainId === '0x4F5DED' ? 'mainnet' : 'other');
+        setCurrentNetwork(chainId === '0xCB4E' ? 'mainnet' : 'other');
         window.location.reload();
       };
 
@@ -100,7 +100,7 @@ export function useWallet() {
       // Try to switch to Electroneum mainnet
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x4F5DED' }],
+        params: [{ chainId: '0xCB4E' }],
       });
     } catch (switchError: any) {
       // If the network doesn't exist, add it
