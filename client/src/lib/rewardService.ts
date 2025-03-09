@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import { type JournalEntry } from '@shared/schema';
 
-const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
+const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
 // Updated network configuration for Electroneum Mainnet
@@ -18,14 +18,20 @@ const ELECTRONEUM_NETWORK = {
   blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
 
-// ABI for ERC20 token contract
+// ABI matching our deployed SPIRIT Token contract
 const TOKEN_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
   "function balanceOf(address account) view returns (uint256)",
   "function totalSupply() view returns (uint256)",
-  "event Transfer(address indexed from, address indexed to, uint256 value)"
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+  "event Approval(address indexed owner, address indexed spender, uint256 value)"
 ];
 
-// ABI for reward distribution contract
+// ABI matching our deployed RewardDistribution contract
 const REWARD_DISTRIBUTION_ABI = [
   {
     "inputs": [
@@ -35,6 +41,13 @@ const REWARD_DISTRIBUTION_ABI = [
     "name": "distributeReward",
     "outputs": [{"name": "", "type": "bool"}],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{"name": "", "type": "address"}],
+    "stateMutability": "view",
     "type": "function"
   }
 ];
@@ -112,10 +125,6 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
   }
 
   try {
-    console.log('Starting reward distribution...');
-    console.log('Recipient:', recipientAddress);
-    console.log('Amount:', amount.toString());
-
     // Request network switch to Electroneum Mainnet
     try {
       await window.ethereum.request({
@@ -141,47 +150,34 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
 
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
-    console.log('Connected address:', await signer.getAddress());
 
-    // Create contract instances
+    // Create token contract instance
     const tokenContract = new ethers.Contract(
       SPIRIT_TOKEN_ADDRESS!,
       TOKEN_ABI,
-      provider
+      signer
     );
 
-    // Check if contract exists and has sufficient balance
-    try {
-      const contractBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!);
-      console.log('Contract balance:', contractBalance.toString());
-      console.log('Required amount:', amount.toString());
-
-      if (contractBalance.lt(amount)) {
-        throw new Error('The reward distribution contract has insufficient SPIRIT tokens. Please contact an administrator to fund the contract.');
-      }
-    } catch (error: any) {
-      if (error.code === 'BAD_DATA' || error.message.includes('could not decode result data')) {
-        throw new Error('The SPIRIT token contract is not properly deployed on the Electroneum mainnet. Please verify the contract deployment.');
-      }
-      throw error;
-    }
-
-    // Create reward contract instance
-    const rewardContract = new ethers.Contract(
+    // Create distribution contract instance
+    const distributionContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS!,
       REWARD_DISTRIBUTION_ABI,
       signer
     );
 
-    // Distribute reward
-    console.log('Distributing reward...');
-    const tx = await rewardContract.distributeReward(recipientAddress, amount);
-    console.log('Transaction sent:', tx.hash);
+    // First check token balance of distribution contract
+    const distributionBalance = await tokenContract.balanceOf(REWARD_DISTRIBUTION_ADDRESS!);
 
-    const receipt = await tx.wait();
-    console.log('Transaction confirmed:', receipt);
+    if (distributionBalance.lt(amount)) {
+      throw new Error('Insufficient balance in distribution contract');
+    }
+
+    // Then check if distribution contract has approval to spend tokens
+    const tx = await distributionContract.distributeReward(recipientAddress, amount);
+    await tx.wait();
 
     return true;
+
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 
@@ -189,12 +185,10 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       throw new Error('Transaction was rejected by user');
     } else if (error.code === -32000) {
       throw new Error('Insufficient ETN for transaction');
-    } else if (error.message.includes('token contract is not properly deployed')) {
-      throw error; // Pass through our custom error
+    } else if (error.message.includes('insufficient balance')) {
+      throw new Error('The distribution contract has insufficient SPIRIT tokens');
     } else if (error.data?.message?.includes('execution reverted')) {
-      throw new Error('Smart contract execution failed. Please verify contract status on mainnet explorer');
-    } else if (error.message.includes('network')) {
-      throw new Error('Please ensure you are connected to Electroneum mainnet and try again');
+      throw new Error('Transaction failed. Please verify you are connected to Electroneum mainnet');
     } else {
       throw new Error(error.message || 'Failed to distribute tokens. Please try again later');
     }

@@ -53,7 +53,7 @@ export default function FAQPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Chain ID:</dt>
-                    <dd className="col-span-2">5201421</dd>
+                    <dd className="col-span-2">52014</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Currency Symbol:</dt>
@@ -110,14 +110,14 @@ export default function FAQPage() {
                 <ExternalLink className="w-4 h-4 text-gray-400" />
               </a>
               <a 
-                href="https://testnet-blockexplorer.electroneum.com/"
+                href="https://blockexplorer.electroneum.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-4 rounded-md border hover:bg-gray-50"
               >
                 <div>
-                  <h3 className="font-medium">Testnet Block Explorer</h3>
-                  <p className="text-sm text-gray-600">Track transactions and smart contracts on testnet</p>
+                  <h3 className="font-medium">Block Explorer</h3>
+                  <p className="text-sm text-gray-600">Track transactions and smart contracts on mainnet</p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-gray-400" />
               </a>
