@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "../hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 import { AdminQueue } from './AdminQueue';
+
+// Log environment variables (only first/last 6 chars for security)
+console.log('Token Address:', SPIRIT_TOKEN_ADDRESS ? `${SPIRIT_TOKEN_ADDRESS.slice(0, 6)}...${SPIRIT_TOKEN_ADDRESS.slice(-6)}` : 'Not set');
+console.log('Distribution Address:', REWARD_DISTRIBUTION_ADDRESS ? `${REWARD_DISTRIBUTION_ADDRESS.slice(0, 6)}...${REWARD_DISTRIBUTION_ADDRESS.slice(-6)}` : 'Not set');
+console.log('Admin Wallet:', ADMIN_WALLET ? `${ADMIN_WALLET.slice(0, 6)}...${ADMIN_WALLET.slice(-6)}` : 'Not set');
 
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
