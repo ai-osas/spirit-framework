@@ -74,8 +74,7 @@ export function useWallet() {
         }
       };
 
-      const handleChainChanged = (chainId: string) => {
-        setCurrentNetwork(chainId === '0xCB4E' ? 'mainnet' : 'other');
+      const handleChainChanged = (_chainId: string) => {
         window.location.reload();
       };
 
