@@ -126,14 +126,17 @@ export function LearningConstellation({ entries, viewMode }: Props) {
   const displayPatterns = (() => {
     switch (viewMode) {
       case 'shared':
-        return patterns.filter(pattern => 
+        // Only show patterns from shared entries by other users
+        return patterns.filter(pattern =>
           pattern.isShared && pattern.creator !== account
         );
       case 'recent':
-        return patterns.filter(pattern => 
+        // Show user's own patterns and collected patterns
+        return patterns.filter(pattern =>
           pattern.creator === account || pattern.inPrivateCollection
         );
       default:
+        // Default to showing user's own patterns
         return patterns.filter(pattern => pattern.creator === account);
     }
   })();

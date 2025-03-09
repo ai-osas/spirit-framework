@@ -94,12 +94,15 @@ export function RewardAdmin() {
   // Only render for admin wallet
   if (!isAdmin) return null;
 
-  // Calculate distribution percentage properly using the formatted values
-  const distributorBalanceNum = parseFloat(distributorBalance);
-  const totalSupplyNum = parseFloat(totalSupply);
-  const currentDistributionPercentage = totalSupplyNum > 0 
-    ? (distributorBalanceNum / totalSupplyNum) * 100 
-    : 0;
+  // Calculate distribution percentage
+  const calculateDistributionPercentage = () => {
+    const distributorBalanceNum = parseFloat(distributorBalance);
+    const totalSupplyNum = parseFloat(totalSupply);
+
+    if (totalSupplyNum === 0) return 0;
+
+    return (distributorBalanceNum / totalSupplyNum) * 100;
+  };
 
   const handleFundDistribution = async () => {
     if (!window.ethereum || !account) {
@@ -180,7 +183,7 @@ export function RewardAdmin() {
               <p className="text-sm text-gray-500">Available for Distribution</p>
               <p className="text-lg font-medium">{Number(distributorBalance).toFixed(2)} SPRT</p>
               <p className="text-xs text-gray-400">
-                {currentDistributionPercentage.toFixed(2)}% of total supply available
+                {calculateDistributionPercentage().toFixed(2)}% of total supply available
               </p>
             </div>
 

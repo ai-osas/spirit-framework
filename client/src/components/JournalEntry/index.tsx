@@ -243,6 +243,7 @@ export default function JournalEntry({ id }: JournalEntryProps) {
                 {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {id ? 'Save Changes' : 'Save'}
               </button>
+              {/* Share Toggle Section */}
               {entry && (
                 <div className="flex items-center gap-1 text-sm">
                   <input
@@ -251,12 +252,14 @@ export default function JournalEntry({ id }: JournalEntryProps) {
                     checked={entry.is_shared || false}
                     onChange={async (e) => {
                       try {
-                        await fetch(`/api/journal/entries/${entry.id}/share`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ shared: e.target.checked })
+                        await apiRequest('PATCH', `/api/journal/entries/${entry.id}/share`, {
+                          shared: e.target.checked
                         });
-                        queryClient.invalidateQueries(['/api/journal/entries']);
+
+                        // Invalidate both entries and learning patterns
+                        queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
+                        queryClient.invalidateQueries({ queryKey: ['learning-patterns'] });
+
                         toast({
                           title: e.target.checked ? 'Entry shared' : 'Entry privacy restored',
                           description: e.target.checked 
