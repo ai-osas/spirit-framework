@@ -53,7 +53,7 @@ export default function FAQPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Chain ID:</dt>
-                    <dd className="col-span-2">52014</dd>
+                    <dd className="col-span-2">5201421</dd>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <dt className="font-medium text-gray-600">Currency Symbol:</dt>

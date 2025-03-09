@@ -5,9 +5,9 @@ const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_A
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
-// Update the network configuration
+// Updated network configuration for Electroneum Mainnet
 const ELECTRONEUM_NETWORK = {
-  chainId: 52014,  // 0xCB4E in decimal
+  chainId: 5201421,
   name: 'Electroneum Mainnet',
   rpcUrls: ['https://rpc.ankr.com/electroneum'],
   nativeCurrency: {
@@ -15,7 +15,7 @@ const ELECTRONEUM_NETWORK = {
     symbol: 'ETN',
     decimals: 18
   },
-  blockExplorerUrls: ['https://blockexplorer.electroneum.com']
+  blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
 
 // ABI for ERC20 token contract
