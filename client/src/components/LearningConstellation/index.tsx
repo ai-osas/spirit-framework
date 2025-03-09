@@ -131,8 +131,8 @@ export function LearningConstellation({ entries, viewMode }: Props) {
       )}
 
       <div className="grid grid-cols-2 gap-6">
-        {displayPatterns.map((pattern, index) => (
-          <Card key={index} className="p-6">
+        {displayPatterns.map((pattern) => (
+          <Card key={pattern.id} className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-2">
                 {pattern.isShared ? (
@@ -145,15 +145,17 @@ export function LearningConstellation({ entries, viewMode }: Props) {
                 </span>
               </div>
               <div className="flex gap-2">
+                {/* Show sharing toggle only to pattern creator */}
                 {pattern.creator === account && (
                   <Switch
                     checked={pattern.isShared}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       toggleSharing.mutate({ entryId: pattern.id, isShared: checked })
                     }
                     aria-label="Toggle sharing"
                   />
                 )}
+                {/* Show collect button for shared patterns by others */}
                 {pattern.creator !== account && pattern.isShared && (
                   <Button
                     variant="ghost"
