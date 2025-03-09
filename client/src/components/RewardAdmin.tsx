@@ -6,14 +6,30 @@ import { toast } from "../hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 import { AdminQueue } from './AdminQueue';
 
+// Get environment variables for contracts
 const SPIRIT_TOKEN_ADDRESS = import.meta.env.VITE_SPIRIT_TOKEN_ADDRESS;
 const REWARD_DISTRIBUTION_ADDRESS = import.meta.env.VITE_DISTRIBUTION_CONTRACT_ADDRESS;
 const ADMIN_WALLET = import.meta.env.VITE_ADMIN_WALLET_ADDRESS;
 
-// Log environment variables (only first/last 6 chars for security)
-console.log('Token Address:', SPIRIT_TOKEN_ADDRESS ? `${SPIRIT_TOKEN_ADDRESS.slice(0, 6)}...${SPIRIT_TOKEN_ADDRESS.slice(-6)}` : 'Not set');
-console.log('Distribution Address:', REWARD_DISTRIBUTION_ADDRESS ? `${REWARD_DISTRIBUTION_ADDRESS.slice(0, 6)}...${REWARD_DISTRIBUTION_ADDRESS.slice(-6)}` : 'Not set');
-console.log('Admin Wallet:', ADMIN_WALLET ? `${ADMIN_WALLET.slice(0, 6)}...${ADMIN_WALLET.slice(-6)}` : 'Not set');
+// Add detailed logging of environment variables
+console.log('Environment Variables Status:');
+console.log('Spirit Token:', SPIRIT_TOKEN_ADDRESS ? 
+  `${SPIRIT_TOKEN_ADDRESS.slice(0, 6)}...${SPIRIT_TOKEN_ADDRESS.slice(-6)}` : 
+  'Not set - Check VITE_SPIRIT_TOKEN_ADDRESS'
+);
+console.log('Distribution:', REWARD_DISTRIBUTION_ADDRESS ? 
+  `${REWARD_DISTRIBUTION_ADDRESS.slice(0, 6)}...${REWARD_DISTRIBUTION_ADDRESS.slice(-6)}` : 
+  'Not set - Check VITE_DISTRIBUTION_CONTRACT_ADDRESS'
+);
+console.log('Admin:', ADMIN_WALLET ? 
+  `${ADMIN_WALLET.slice(0, 6)}...${ADMIN_WALLET.slice(-6)}` : 
+  'Not set - Check VITE_ADMIN_WALLET_ADDRESS'
+);
+
+// Verify all required addresses are present
+if (!SPIRIT_TOKEN_ADDRESS || !REWARD_DISTRIBUTION_ADDRESS || !ADMIN_WALLET) {
+  console.error('Missing required environment variables for contract interaction');
+}
 
 // ABI matching our deployed SPIRIT Token contract
 const TOKEN_ABI = [
