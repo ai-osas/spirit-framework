@@ -17,7 +17,15 @@ const ELECTRONEUM_NETWORK = {
   blockExplorerUrls: ['https://blockexplorer.electroneum.com/']
 };
 
-// ABI matching our deployed RewardDistribution contract
+// ABI for SPIRIT Token contract
+const TOKEN_ABI = [
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)"
+];
+
+// ABI for RewardDistribution contract
 const REWARD_DISTRIBUTION_ABI = [
   {
     "inputs": [
@@ -26,20 +34,6 @@ const REWARD_DISTRIBUTION_ABI = [
     ],
     "name": "distributeReward",
     "outputs": [{"name": "", "type": "bool"}],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [{"name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "approveTokens",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }
@@ -144,6 +138,22 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
+    // Create token contract instance
+    const tokenContract = new ethers.Contract(
+      SPIRIT_TOKEN_ADDRESS!,
+      TOKEN_ABI,
+      signer
+    );
+
+    // Check if the distribution contract already has sufficient allowance
+    const currentAllowance = await tokenContract.allowance(await signer.getAddress(), REWARD_DISTRIBUTION_ADDRESS!);
+
+    if (currentAllowance < amount) {
+      // Approve distribution contract to spend tokens
+      const approveTx = await tokenContract.approve(REWARD_DISTRIBUTION_ADDRESS!, amount);
+      await approveTx.wait();
+    }
+
     // Create distribution contract instance
     const distributionContract = new ethers.Contract(
       REWARD_DISTRIBUTION_ADDRESS!,
@@ -151,20 +161,12 @@ export async function distributeReward(recipientAddress: string, amount: bigint)
       signer
     );
 
-    // First approve tokens if needed
-    try {
-      await distributionContract.approveTokens();
-    } catch (error: any) {
-      if (!error.message.includes('already approved')) {
-        throw error;
-      }
-    }
-
-    // Then distribute the reward
+    // Distribute the reward
     const tx = await distributionContract.distributeReward(recipientAddress, amount);
     await tx.wait();
 
     return true;
+
   } catch (error: any) {
     console.error('Failed to distribute reward:', error);
 
