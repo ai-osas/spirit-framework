@@ -71,6 +71,15 @@ export default function SpiritJournal() {
         <div className="p-4">
           <h1 className="text-xl font-semibold mb-6">Spirit Journal</h1>
 
+          {account && (
+            <div className="bg-gray-50 p-3 rounded-lg mb-4 text-sm">
+              <p className="text-gray-500">Connected Wallet</p>
+              <p className="font-mono text-gray-700">
+                {`${account.slice(0, 4)}...${account.slice(-4)}`}
+              </p>
+            </div>
+          )}
+
           <TokenBalance />
           <RewardAdmin />
 
