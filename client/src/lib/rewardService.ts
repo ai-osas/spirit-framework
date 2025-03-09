@@ -7,7 +7,7 @@ const MAX_DISTRIBUTION_PERCENTAGE = 40;
 
 // Updated network configuration for Electroneum Mainnet
 const ELECTRONEUM_NETWORK = {
-  chainId: 5201421,
+  chainId: 52014,
   name: 'Electroneum Mainnet',
   rpcUrls: ['https://rpc.ankr.com/electroneum'],
   nativeCurrency: {
