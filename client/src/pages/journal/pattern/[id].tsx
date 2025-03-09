@@ -8,6 +8,7 @@ import { analyzeLearningPatterns } from '@/lib/openai';
 import { useWallet } from '@/hooks/useWallet';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function ExplorePatternPage() {
   const { id } = useParams();
@@ -34,7 +35,8 @@ export default function ExplorePatternPage() {
         title: entry.title,
         content: entry.content,
         isShared: entry.is_shared,
-        creator: entry.wallet_address
+        creator: entry.wallet_address,
+        id: entry.id
       }));
       return analyzeLearningPatterns(entryData);
     },
@@ -43,40 +45,16 @@ export default function ExplorePatternPage() {
 
   const toggleSharing = useMutation({
     mutationFn: async (isShared: boolean) => {
-      const relatedEntry = entries.find(entry =>
-        pattern.relatedConcepts.some(concept =>
-          entry.title.toLowerCase().includes(concept.toLowerCase()) ||
-          entry.content.toLowerCase().includes(concept.toLowerCase())
-        )
-      );
-
-      if (!relatedEntry) {
-        throw new Error('No matching entry found for this pattern');
-      }
-
-      // Check if the current user is the creator
-      if (relatedEntry.wallet_address !== account) {
-        throw new Error('Only the creator can modify sharing settings');
-      }
-
-      const response = await fetch(`/api/journal/patterns/${relatedEntry.id}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isShared })
+      await apiRequest('PATCH', `/api/journal/entries/${id}/share`, {
+        shared: isShared
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update sharing status');
-      }
-
-      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-patterns'] });
       queryClient.invalidateQueries({ queryKey: ['/api/journal/entries'] });
+      queryClient.invalidateQueries({ queryKey: ['learning-patterns'] });
       toast({
         title: "Sharing Updated",
-        description: "Your learning pattern sharing preferences have been updated.",
+        description: "Your pattern sharing preferences have been updated.",
       });
     },
     onError: (error) => {
@@ -84,20 +62,22 @@ export default function ExplorePatternPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update sharing status. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update sharing status",
       });
     }
   });
 
   const isLoading = entriesLoading || patternsLoading;
-  const pattern = patterns[Number(id) - 1];
+
+  // Find the pattern by matching the entry ID instead of array index
+  const pattern = patterns.find(p => p.id === Number(id));
 
   if (isLoading) {
     return (
       <div className="grid place-items-center h-screen">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          <p className="text-gray-600">Analyzing learning patterns...</p>
+          <p className="text-gray-600">Loading pattern details...</p>
         </div>
       </div>
     );
@@ -108,7 +88,7 @@ export default function ExplorePatternPage() {
       <div className="grid place-items-center h-screen">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Pattern Not Found</h2>
-          <p className="text-gray-600 mb-4">This learning pattern could not be found.</p>
+          <p className="text-gray-600 mb-4">The learning pattern you're looking for could not be found.</p>
           <Button onClick={() => navigate('/journal')}>
             Return to Journal
           </Button>
